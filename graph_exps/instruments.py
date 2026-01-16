@@ -38,10 +38,10 @@ def aggregate_graph(multigraph: nx.MultiGraph | nx.MultiDiGraph, weight_name: st
     for u, v, data in multigraph.edges(data=True):
       weight = data[weight_name]
 
-    if G.has_edge(u, v):
-        G[u][v]['weight'] += weight
-    else:
-        G.add_edge(u, v, weight=weight)
+      if G.has_edge(u, v):
+          G[u][v]['weight'] += weight
+      else:
+          G.add_edge(u, v, weight=weight)
 
     return G
     
