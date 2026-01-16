@@ -129,3 +129,8 @@ def generate_cut(self, type: str = "min") -> list:
       self.cut_alpha = edges_in_cut
 
     return edges_in_cut
+
+HuGraphForExps.visualise = visualise
+HuGraphForExps.visualise_with_demands = visualise_with_demands
+HuGraphForExps._compute_least_nonzero_vector = _compute_least_nonzero_vector
+HuGraphForExps.generate_cut = generate_cut
