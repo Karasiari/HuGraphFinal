@@ -33,7 +33,7 @@ class HuGraphForExps:
 
         # кэши для расчётов
         self.graph_pinv_sqrt: Optional[np.ndarray] = get_pinv_sqrt(self.laplacian)
-        self.demands_components_num = Optional[int] = len(nx.connected_components(self.demands_graph))
+        self.demands_components_num = Optional[int] = len(list(nx.connected_components(self.demands_graph)))
         self.demands_pinv_sqrt: Optional[np.ndarray] = get_pinv_sqrt(self.demands_laplacian)
         self.alpha_inv: Optional[float] = None
         self.L_alpha_inv: Optional[np.ndarray] = None
