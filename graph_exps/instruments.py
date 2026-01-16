@@ -6,6 +6,7 @@ import networkx as nx
 import scipy
 
 from scipy.linalg import fractional_matrix_power
+from scipy.sparse.linalg import eigsh
 
 # вспомогательный класс для demands для входа в наш алгоритм целочисленного решения MCF
 class Demand:
@@ -20,6 +21,11 @@ def get_laplacian(graph: nx.Graph) -> np.ndarray:
     mat = nx.laplacian_matrix(graph)
     laplacian = mat.astype(float).toarray()
     return laplacian
+    
+def update_laplacian_on_edge(laplacian: np.ndarray, i: int, j: int, w: float) -> np.ndarray:
+    laplacian[i, i] += w; laplacian[j, j] += w
+    laplacian[i, j] -= w; laplacian[j, i] -= w
+    return laplacian
 
 def aggregate_graph(multigraph: nx.MultiGraph | nx.MultiDiGraph, weight_name: str) -> nx.Graph:
     """
@@ -32,17 +38,21 @@ def aggregate_graph(multigraph: nx.MultiGraph | nx.MultiDiGraph, weight_name: st
     for u, v, data in multigraph.edges(data=True):
       weight = data[weight_name]
 
-      if G.has_edge(u, v):
+    if G.has_edge(u, v):
         G[u][v]['weight'] += weight
-      else:
+    else:
         G.add_edge(u, v, weight=weight)
 
-     return G
+    return G
     
-  def get_pinv_sqrt(laplacian: np.ndarray) -> np.ndarray:
-      L_pinv = np.linalg.pinv(laplacian)
-      L_pinv_sqrt = fractional_matrix_power(L_pinv, 0.5)
-      return L_pinv_sqrt
+def get_pinv_sqrt(laplacian: np.ndarray) -> np.ndarray:
+    L_pinv = np.linalg.pinv(laplacian)
+    L_pinv_sqrt = fractional_matrix_power(L_pinv, 0.5)
+    return L_pinv_sqrt
+
+def compute_eig_smallest_nonzero(L: np.ndarray, kernel_dim: int) -> float:
+    eigvals = eigsh(L, k=kernel_dim+2, which='SA', maxiter=5000)[0]
+    return eigvals[kernel_dim] if eigvals[kernel_dim] > 1e-12 else 0.0
 
 # вспомогательные функции для MCFP (Maximum Concurrent Flow Problem)
 
