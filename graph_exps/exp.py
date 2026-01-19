@@ -7,9 +7,14 @@ from typing import Optional, Dict, Any, Tuple, List
 from .core import HuGraphForExps
 from .instruments_for_exps import * # импорт вспомогательных функций
 
-# функция для параллелизованного расчета меры alpha для ВСЕХ ребер графа
+# функция для параллелизованного расчета метрику α для ВСЕХ ребер графа
 
-def compute_alpha_for_all_edges(graph: nx.Graph, n_jobs=8) -> List[Tuple[Tuple[int, int], float]]:
+def compute_alpha_for_all_edges(graph: HuGraphForExps, n_jobs=8) -> List[Tuple[Tuple[int, int], float]]:
+    """
+    Рассчитывает метрику α для ВСЕХ ребер графа - для дальнейшего предпочтительного по метрике распределения новых ресурсов в эксперименте
+    Input: граф-объект класса HuGraphsExps, n_jobs
+    Output: Отсортированный по убыванию список ребер в виде ((source, target), значение α)
+    """
     # Проверка, что граф сериализуем
     try:
         graph_state = pickle.dumps(graph)
