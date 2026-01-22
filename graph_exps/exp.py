@@ -9,7 +9,7 @@ from joblib import Parallel, delayed
 
 from .core import HuGraphForExps
 from .instruments_for_exps import * # импорт вспомогательных функций
-from spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input # импорт функции для преобразования данных под алгоритм перераспределения трафика
+from .spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input # импорт функции для преобразования данных под алгоритм перераспределения трафика
 
 # функция для решения перераспределения трафика - в решении наш алгоритм
 
