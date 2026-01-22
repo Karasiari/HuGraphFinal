@@ -149,9 +149,9 @@ class HuGraphForExps:
     # основные алгоритмы на графе
     # ---------------------------
 
-    # ------------
-    # MCFP (gamma)
-    #-------------
+    # --------------
+    # MCFP -> gamma
+    #---------------
     def solve_mcfp(self, solver_flag: bool = False, **solver_kwargs) -> float:
         """
         Решение задачи максимального пропускного потока на графе self.graph + self.demands_graph с использованием CVXPY.
