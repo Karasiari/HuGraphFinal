@@ -20,7 +20,7 @@ def solve_multi_commodity_flow_problem(graph: nx.MultiDiGraph,
         
   # Step 2: Run the multicommodity flow procedure to generate the flow and l(e) values
   flow = multi_commodity_flow(graph, grouped_demands, C_max, eps)
-,
+                                                              
   # Step 3: Scale the flow to make it feasible (ensures flows respect edge capacities)
   scale_flows(flow, graph, C_max)
 
