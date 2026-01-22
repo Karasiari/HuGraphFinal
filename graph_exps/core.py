@@ -9,7 +9,7 @@ from scipy.sparse.linalg import eigsh
 
 # импорты основных алгоритмов
 from mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
-from mcf_algorithm.main_algorithm import solve_mcf_problem
+from mcf_algorithm.main_algorithm import solve_multi_commodity_flow_problem
 
 # импорт вспомогательных функций
 from .instruments import *
@@ -189,7 +189,7 @@ class HuGraphForExps:
         G_copy = G.copy()
 
         # получаем решение
-        flow_paths, satisfied_demands_dict, solved = solve_mcf_problem(G_copy, self.C_max, demands, unsatisfied_subset, eps)
+        flow_paths, satisfied_demands_dict, solved = solve_multi_commodity_flow_problem(G_copy, self.C_max, demands, unsatisfied_subset, eps)
         self.mcf_solved = solved
 
         return flow_paths, satisfied_demands_dict, solved
