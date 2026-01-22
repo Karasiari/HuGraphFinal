@@ -6,7 +6,6 @@ import networkx as nx
 import scipy
 
 from scipy.linalg import fractional_matrix_power
-from scipy.sparse.linalg import eigsh
 
 # -------------------------------------------------------------------------------------
 # вспомогательный класс для demands для входа в наш алгоритм целочисленного решения MCF
