@@ -7,8 +7,7 @@ import networkx as nx
 import scipy
 from scipy.sparse.linalg import eigsh
 
-import cvxpy as cp
-from cvxpy import SolverError
+from mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
 
 from mcf_algorithm.main_algorithm import solve_mcf_problem
 
@@ -152,10 +151,10 @@ class HuGraphForExps:
     # --------------
     # MCFP -> gamma
     #---------------
-    def solve_mcfp(self, solver_flag: bool = False, **solver_kwargs) -> float:
+    def solve_mcfp(self, solver_flag: bool = False) -> float:
         """
         Решение задачи максимального пропускного потока на графе self.graph + self.demands_graph с использованием CVXPY.
-        solver_kwargs: параметры для solver.solve(), такие как методы решения и точность.
+        solver_flag: решаем ли всегда с помощью солвера CLARABEL.
         return: gamma
         """
         # копируем граф и преобразуем его в ориентированный
@@ -165,66 +164,8 @@ class HuGraphForExps:
         # копируем лапласиан запросов
         demands_laplacian = self.demands_laplacian.copy()
 
-        # получаем incidence matrix и capacities рёбер
-        incidence_mat = get_incidence_matrix_for_mcfp(graph)
-        bandwidth = get_capacities_for_mcfp(graph)
-
-        # определяем переменные потока и гамму
-        flow = cp.Variable((len(graph.edges), len(graph.nodes)))
-        gamma = cp.Variable()
-
-        # определяем задачу
-        prob = cp.Problem(
-            cp.Maximize(gamma),
-            [
-                cp.sum(flow, axis=1) <= bandwidth,
-                incidence_mat @ flow == -gamma * demands_laplacian.T,
-                flow >= 0,
-                gamma >= 0,
-            ]
-        )
-
-        # решаем задачу
-        max_for_tries = 5
-
-        solver_error = False
-        if not solver_flag:
-            try:
-                prob.solve(solver='CLARABEL', **solver_kwargs)
-            except SolverError:
-                solver_error = True
-                prob.solve(solver='ECOS', **solver_kwargs)
-        else:
-            prob.solve(solver='CLARABEL', **solver_kwargs)
-        gamma = gamma.value if gamma is not None else None
-        max_gamma = gamma
-        current_try = 1
-        if prob.status != "optimal":
-            gamma = None
-        while gamma is None and (current_try <= 5 or max_gamma is None):
-            if not solver_flag:
-                if not solver_error:
-                    try:
-                        prob.solve(solver='CLARABEL', **solver_kwargs)
-                    except SolverError:
-                        solver_error = True
-                        current_try = 1
-                        max_gamma, gamma = None, None
-                        prob.solve(solver='ECOS', **solver_kwargs)
-                else:
-                    prob.solve(solver='ECOS', **solver_kwargs)
-            else:
-                prob.solve(solver='CLARABEL', **solver_kwargs)
-            if max_gamma is not None and gamma is not None:
-                max_gamma = max(max_gamma, gamma.value)
-            elif max_gamma is None and gamma is not None:
-                max_gamma = gamma.value
-            current_try += 1
-            if prob.status != "optimal":
-                gamma = None
-            gamma = gamma.value if gamma is not None else None
-
-        gamma = gamma if gamma is not None else max_gamma
+        # получаем решение под правильный input
+        gamma = solve_max_concurrent_flow_problem(graph, demands_laplacian, solver_flag)
         self.gamma = gamma
         
         return gamma
