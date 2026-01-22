@@ -9,9 +9,11 @@ from .instruments import *
 # комментарии на английском - оставил оригинал
 # --------------------------------------------
 
-def solve_multi_commodity_flow_problem(graph: nx.MultiDiGraph, C_max: float, demands: List[Demand], unsatisfied_subset: List[int], eps: float) -> Tuple[Dict[int, List[Tuple[int, int, int]]], 
-                                                                                                                                       Dict[int, Tuple[int, int, int]],
-                                                                                                                                       bool]:
+def solve_multi_commodity_flow_problem(graph: nx.MultiDiGraph, 
+                                       C_max: float, demands: List[Demand], unsatisfied_subset: List[int], 
+                                       eps: float) -> Tuple[Dict[int, List[Tuple[int, int, int]]], 
+                                                            Dict[int, Tuple[int, int, int]],
+                                                            bool]:
   # Step 1: Group demands and create the mapping from i to source-target pairs
   grouped_demands, demand_indices_by_group, i_to_source_target = group_demands_and_create_mapping(demands,
                                                                                                   unsatisfied_subset)
