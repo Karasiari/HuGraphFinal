@@ -163,7 +163,7 @@ class HuGraphForExps:
         graph = nx.DiGraph(graph)
         demands_laplacian = self.demands_laplacian.copy()
 
-        # получаем решение под правильный input
+        # получаем решение
         gamma = solve_max_concurrent_flow_problem(graph, demands_laplacian, solver_flag)
         self.gamma = gamma
         
