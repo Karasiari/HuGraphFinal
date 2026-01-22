@@ -7,8 +7,8 @@ import networkx as nx
 import scipy
 from scipy.sparse.linalg import eigsh
 
+# импорты основных алгоритмов
 from mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
-
 from mcf_algorithm.main_algorithm import solve_mcf_problem
 
 from .instruments import *
