@@ -17,7 +17,6 @@ class HuGraphForExps:
         # инициализация
         self.multigraph = multigraph
         self.demands_multidigraph = demands_multidigraph
-
         self.graph = aggregate_graph(multigraph, weight_name="capacity")
         self.demands_graph = aggregate_graph(demands_multidigraph, weight_name="weight")
         self.laplacian = get_laplacian(self.graph)
@@ -33,28 +32,25 @@ class HuGraphForExps:
 
         # кэши для расчётов
         self.graph_pinv_sqrt: Optional[np.ndarray] = get_pinv_sqrt(self.laplacian)
-        self.demands_components_num: Optional[int] = len(list(nx.connected_components(self.demands_graph)))
-        self.demands_pinv_sqrt: Optional[np.ndarray] = get_pinv_sqrt(self.demands_laplacian)
-        self.alpha_inv: Optional[float] = None
-        self.L_alpha_inv: Optional[np.ndarray] = None
 
+        # атрибуты для решения MCFP
         # последнее рассчитанное gamma для MCFP
         self.gamma: Optional[float] = None
 
+        # атрибуты для решения MCF
         # максимальная capacity мультиребра self.multigraph для MCF
         self.C_max = max([data["capacity"] for _, _, data in self.multigraph.edges(data=True)])
-
         # флаг - решилось ли последнее MCF
         self.mcf_solved: Optional[bool] = None
 
+        # старые атрибуты
         # последние посчитанные разрезы self.graph (все в old.py)
         self.mincut: Optional[np.ndarray] = None
         self.cut_alpha: Optional[np.ndarray] = None
 
-    # ---------- alpha ----------
-
-    # старая версия для настоящего alpha
-
+    # ----------------
+    # расчет метрики α
+    # ----------------
     def calculate_alpha(self) -> float:
         """
         Вычисляет метрику α = λ_max / trace для анализа устойчивости сети.
@@ -89,44 +85,9 @@ class HuGraphForExps:
         self.alpha = lam_max / tr if tr != 0.0 else float("inf")
         return lam_max / tr if tr != 0.0 else float("inf")
 
-    # новая версия для экспов - соотношение по мере такое же
-
-    def calculate_alpha_inv(self) -> float:
-        """
-        Вычисляет обратную метрику α_inv = trace / λ_min.
-    
-        Это "двойственная" метрика к α.
-    
-        Математически:
-        1. Создаём двойственную матрицу: L_α_inv = Ld_inv_sqrt @ Lg @ Ld_inv_sqrt
-           где Ld_inv_sqrt = (Ld⁺)^(1/2) - нормирует по трафику
-        2. Находим минимальное ненулевое собственное значение λ_min(L_α_inv)
-        3. α_inv = trace / λ_min - обратное отношение
-    
-        Интерпретация:
-        - α_inv → ∞ при λ_min → 0 (критическая неустойчивость нагрузки)
-    
-        Особенность: использует kernel_dim = demands_components_num
-        (количество связных компонент в графе трафика), чтобы пропустить
-        нулевые собственные значения, соответствующие компонентам.
-    
-        Returns
-        -------
-        float
-            Обратная метрика устойчивости α_inv (≥ 1, может быть ∞)
-        """
-        Lg = self.laplacian
-        Ld_inv_sqrt = self.demands_pinv_sqrt
-        L_alpha_inv = Ld_inv_sqrt @ Lg @ Ld_inv_sqrt
-        self.L_alpha_inv = L_alpha_inv
-        lam_min = compute_eig_smallest_nonzero(L_alpha_inv, self.demands_components_num)
-        tr = float(np.trace(L_alpha_inv))
-        self.alpha_inv = tr / lam_min if lam_min != 0.0 else float("inf")
-        return tr / lam_min if lam_min != 0.0 else float("inf")
-
-
-    # ---------- изменения self.multigraph ----------
-
+    # -------------------------
+    # изменения self.multigraph
+    # -------------------------
     def change_multiedge(self, source: int, target: int, type: str, key: int = None, capacity: float = None) -> None:
         """
         Удаление или добавление мультиребра мультиграфа смежности self.multigraph
@@ -182,9 +143,13 @@ class HuGraphForExps:
         self.graph = self.graph_initial.copy()
         self.laplacian = get_laplacian(self.graph)
 
-    # ---------- решения основных задач на графе ----------
-    
+    # ---------------------------
+    # основные алгоритмы на графе
+    # ---------------------------
+
+    # ------------
     # MCFP (gamma)
+    #-------------
     def solve_mcfp(self, solver_flag: bool = False, **solver_kwargs) -> float:
         """
         Решение задачи максимального пропускного потока на графе self.graph + self.demands_graph с использованием CVXPY.
@@ -262,7 +227,9 @@ class HuGraphForExps:
         
         return gamma
 
+    # ------------------------------------------------------------------------------------------
     # MCF (проложенные запросы, индексы проложенных запросов, флаг - проложились ли все запросы)
+    # ------------------------------------------------------------------------------------------
     def solve_mcf(self, eps=0.1):
         # Step 0: Get right representation for demands
         demands = []
