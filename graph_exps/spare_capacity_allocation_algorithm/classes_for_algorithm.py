@@ -33,3 +33,12 @@ class DemandInput:
     target: Node
     volume: int
     initial_edge_path: Sequence[OrientedEdge]
+
+
+@dataclass(frozen=True, slots=True)
+class SpareCapacityGreedyInput:
+    """Complete input for the greedy spare-capacity allocation algorithm."""
+    edges: Sequence[EdgeInput]
+    demands: Sequence[DemandInput]
+    random_seed: Optional[int] = None
+
