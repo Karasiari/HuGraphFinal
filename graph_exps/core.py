@@ -158,11 +158,9 @@ class HuGraphForExps:
         solver_flag: решаем ли всегда с помощью солвера CLARABEL.
         return: gamma
         """
-        # копируем граф и преобразуем его в ориентированный
+        # получаем правильный формат input под наш алгоритм
         graph = self.graph.copy()
         graph = nx.DiGraph(graph)
-
-        # копируем лапласиан запросов
         demands_laplacian = self.demands_laplacian.copy()
 
         # получаем решение под правильный input
