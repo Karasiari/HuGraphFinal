@@ -37,12 +37,12 @@ def solve_max_concurrent_flow_problem(graph: nx.DiGraph, demands_laplacian: np.n
   solver_error = False
   if not solver_flag:
       try:
-          prob.solve(solver='CLARABEL', **solver_kwargs)
+          prob.solve(solver='CLARABEL')
       except SolverError:
           solver_error = True
-          prob.solve(solver='ECOS', **solver_kwargs)
+          prob.solve(solver='ECOS')
   else:
-      prob.solve(solver='CLARABEL', **solver_kwargs)
+      prob.solve(solver='CLARABEL')
   gamma = gamma.value if gamma is not None else None
   max_gamma = gamma
   current_try = 1
@@ -52,16 +52,16 @@ def solve_max_concurrent_flow_problem(graph: nx.DiGraph, demands_laplacian: np.n
       if not solver_flag:
           if not solver_error:
               try:
-                  prob.solve(solver='CLARABEL', **solver_kwargs)
+                  prob.solve(solver='CLARABEL')
               except SolverError:
                   solver_error = True
                   current_try = 1
                   max_gamma, gamma = None, None
-                  prob.solve(solver='ECOS', **solver_kwargs)
+                  prob.solve(solver='ECOS')
           else:
-              prob.solve(solver='ECOS', **solver_kwargs)
+              prob.solve(solver='ECOS')
       else:
-          prob.solve(solver='CLARABEL', **solver_kwargs)
+          prob.solve(solver='CLARABEL')
       if max_gamma is not None and gamma is not None:
           max_gamma = max(max_gamma, gamma.value)
       elif max_gamma is None and gamma is not None:
