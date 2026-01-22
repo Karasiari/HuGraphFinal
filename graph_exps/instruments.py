@@ -12,7 +12,8 @@ from scipy.linalg import fractional_matrix_power
 # -------------------------------------------------------------------------------------
 
 class Demand:
-    def __init__(self, source: int, sink: int, capacity: float):
+    def __init__(self, id: int, source: int, sink: int, capacity: float):
+        self.id = id
         self.source = source
         self.sink = sink
         self.capacity = capacity
