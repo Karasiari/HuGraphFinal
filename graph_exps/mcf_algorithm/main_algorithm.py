@@ -47,7 +47,7 @@ def solve_multi_commodity_flow_problem(graph: nx.MultiDiGraph,
 
   # Combine the satisfied demands
   satisfied_demands += remaining_satisfied_demands
-  satisfied_demands_dict = {id: (demands[id].source, demands[id].target, demands[id].capacity) for id in satisfied_demands}
+  satisfied_demands_dict = {id: (demands[id].source, demands[id].sink, demands[id].capacity) for id in satisfied_demands}
   flow_paths.update(remaining_paths)
   solved = unsatisfied_subset == set(satisfied_demands)
 
