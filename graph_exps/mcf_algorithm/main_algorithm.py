@@ -1,26 +1,33 @@
+from typing import Dict, Tuple, List
+import networkx as nx
+
+# импорт вспомогательных функций под наш алгоритм
 from .instruments import *
 
 # -----------------------------------------------------------------------------------------------------------------------
 # основная функция для решения MCF (проложенные запросы, индексы проложенных запросов, флаг - проложились ли все запросы)
+# комментарии на английском - оставил оригинал
 # -----------------------------------------------------------------------------------------------------------------------
 
-def solve_mcf_problem(G_copy, C_max, demands, unsatisfied_subset, eps):
+def solve_mcf_problem(graph: nx.MultiDiGraph, C_max: float, demands: List[Demand], unsatisfied_subset: List[int], eps: float) -> Tuple[Dict[int, List[Tuple[int, int, int]]], 
+                                                                                                                                       Dict[int, Tuple[int, int, int]],
+                                                                                                                                       bool]:
   # Step 1: Group demands and create the mapping from i to source-target pairs
   grouped_demands, demand_indices_by_group, i_to_source_target = group_demands_and_create_mapping(demands,
                                                                                                   unsatisfied_subset)
         
   # Step 2: Run the multicommodity flow procedure to generate the flow and l(e) values
-  flow = multi_commodity_flow(G_copy, grouped_demands, C_max, eps)
-
+  flow = multi_commodity_flow(graph, grouped_demands, C_max, eps)
+,
   # Step 3: Scale the flow to make it feasible (ensures flows respect edge capacities)
-  scale_flows(flow, G_copy, C_max)
+  scale_flows(flow, graph, C_max)
 
   # Step 4: Subdivide flows by paths for ungrouped demands
   flow_paths, satisfied_demands = subdivide_flows_by_paths(flow, demand_indices_by_group, demands,
                                                            i_to_source_target)
 
   # Step 5: Subtract the satisfied demands from the graph capacity
-  graph_copy = subtract_flow_from_capacity(G_copy, flow_paths, demands)
+  graph_copy = subtract_flow_from_capacity(graph, flow_paths, demands)
 
   satisfied_demands_set = set(satisfied_demands)
   left_to_satisfy = unsatisfied_subset - satisfied_demands_set
