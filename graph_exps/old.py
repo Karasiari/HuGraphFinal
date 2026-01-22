@@ -8,7 +8,9 @@ import matplotlib as mpl
 
 from .core import HuGraphForExps
 
+# ---------------------------
 # визуализация немультиграфов
+# ---------------------------
 
 def visualise(self, version="initial", title="Граф смежности", node_size=300, font_size=10) -> None:
   if version == "current":
@@ -65,9 +67,13 @@ def visualise_with_demands(self, version="initial", node_size: int = 110, font_s
   axR.set_title("Граф запросов"); axR.axis("off")
   plt.tight_layout(); plt.show()
 
+# -------------
 # старые методы
+# -------------
 
+# ---
 # cut
+# ---
 
 def _compute_least_nonzero_vector(self, L: np.ndarray) -> np.ndarray:
     # находим все собственные значения и векторы
