@@ -269,8 +269,9 @@ class HuGraphForExps:
 
         # Combine the satisfied demands
         satisfied_demands += remaining_satisfied_demands
+        satisfied_demands_dict = {id: (demands[id].source, demands[id].target, demands[id].capacity) for id in satisfied_demands}
         flow_paths.update(remaining_paths)
         solved = unsatisfied_subset == set(satisfied_demands)
         self.mcf_solved = solved
 
-        return flow_paths, satisfied_demands, solved
+        return flow_paths, satisfied_demands_dict, solved
