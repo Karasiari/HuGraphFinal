@@ -9,6 +9,13 @@ from joblib import Parallel, delayed
 
 from .core import HuGraphForExps
 from .instruments_for_exps import * # импорт вспомогательных функций
+from spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input # импорт функции для преобразования данных под алгоритм перераспределения трафика
+
+# функция для решения перераспределения трафика - в решении наш алгоритм
+
+def allocate_spare_capacity(graph: HuGraphForExps, random_seed: int | None = None):
+    route_result, demands, solved = graph.solve_mcf()
+    input_for_algorithm = convert_to_greedy_input(graph.multigraph, demands, route_result, random_seed)
 
 # функция для параллелизованного расчета метрику α для ВСЕХ ребер графа
 
