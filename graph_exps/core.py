@@ -11,6 +11,7 @@ from scipy.sparse.linalg import eigsh
 from mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
 from mcf_algorithm.main_algorithm import solve_mcf_problem
 
+# импорт вспомогательных функций
 from .instruments import *
 
 class HuGraphForExps:
