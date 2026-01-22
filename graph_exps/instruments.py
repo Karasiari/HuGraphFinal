@@ -8,14 +8,19 @@ import scipy
 from scipy.linalg import fractional_matrix_power
 from scipy.sparse.linalg import eigsh
 
+---------------------------------------------------------------------------------------
 # вспомогательный класс для demands для входа в наш алгоритм целочисленного решения MCF
+---------------------------------------------------------------------------------------
+
 class Demand:
     def __init__(self, source: int, sink: int, capacity: float):
         self.source = source
         self.sink = sink
         self.capacity = capacity
 
+------------------------------------------------------------------
 # вспомогательные функции под основной объект класса (для core.py)
+------------------------------------------------------------------
 
 def get_laplacian(graph: nx.Graph) -> np.ndarray:
     """
@@ -137,40 +142,9 @@ def get_pinv_sqrt(laplacian: np.ndarray) -> np.ndarray:
     L_pinv_sqrt = fractional_matrix_power(L_pinv, 0.5)
     return L_pinv_sqrt
 
-def compute_eig_smallest_nonzero(L: np.ndarray, kernel_dim: int) -> float:
-    """
-    Вычисляет наименьшее ненулевое собственное значение матрицы Лапласа.
-    
-    Для матрицы Лапласа графа:
-    - Первое собственное значение всегда 0 (соотв. постоянному вектору)
-    - Второе наименьшее значение называется algebraic connectivity
-    - kernel_dim = 1 для связных графов (ядро размерности 1)
-    
-    Parameters
-    ----------
-    L : np.ndarray
-        Матрица Лапласа (симметричная, положительно полуопределённая)
-    kernel_dim : int
-        Размерность ядра (количество нулевых собственных значений)
-        Для связного графа = 1
-        
-    Returns
-    -------
-    float
-        Наименьшее ненулевое собственное значение
-        Или 0.0, если значение меньше порога 1e-12
-        
-    Notes
-    -----
-    - Использует алгоритм Ланцоша (eigsh) для поиска наименьших значений
-    - Ищет kernel_dim+2 значений, чтобы гарантировать нахождение ненулевого
-    - Для несвязных графов kernel_dim > 1 (равен количеству компонент связности)
-    - Может быть неточным для очень маленьких значений (< 1e-10)
-    """
-    eigvals = eigsh(L, k=kernel_dim+2, which='SA', maxiter=5000)[0]
-    return eigvals[kernel_dim] if eigvals[kernel_dim] > 1e-12 else 0.0
-
+--------------------------------------------------------------------
 # вспомогательные функции для MCFP (Maximum Concurrent Flow Problem)
+--------------------------------------------------------------------
 
 def get_incidence_matrix_for_mcfp(graph: nx.DiGraph) -> np.ndarray:
     """
@@ -192,8 +166,10 @@ def get_capacities_for_mcfp(graph: nx.DiGraph) -> np.ndarray:
     edges_with_weights_dict = {key: value for key, value in edges_with_weights}
     return np.array(list(edges_with_weights_dict.values()), dtype=np.float64)
 
+-----------------------------------------------------------------------
 # вспомогательные функции для целочисленного MCF (Multi Commodity Flow)
 # комментарии на английском - оставил оригинал
+-----------------------------------------------------------------------
 
 # Custom function to find the shortest path with edge keys
 def shortest_path_with_edge_keys(G, source, target, edge_costs):
