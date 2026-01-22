@@ -1,30 +1,20 @@
-"""Convert GraphData and RouteResult into SpareCapacityGreedyInput.
+"""Convert graph data (graph, demands) and the solution of the MCF problem (route_result) into SpareCapacityGreedyInput.
 
 This module provides utilities to transform the internal graph/routing
 representation into the format expected by the greedy spare capacity
 allocation algorithm.
 """
 
-from __future__ import annotations
-
-from itertools import pairwise
 from typing import Dict, List, Tuple
 
 import networkx as nx
 from classes_for_algorithm import (
     DemandID,
     DemandInput,
-    EdgeInput
-)
-from spare_capacity_allocation.greedy_spare_capacity_allocation import (
-    DemandID,
-    DemandInput,
     EdgeInput,
     OrientedEdge,
-    SpareCapacityGreedyInput,
-    SpareCapacityGreedyOutput,
+    SpareCapacityGreedyInput
 )
-from utils.router import RouteResult
 
 
 def _canonical_edge_key(node_a: int, node_b: int) -> Tuple[int, int]:
@@ -41,7 +31,7 @@ def _aggregate_edge_capacities(graph: nx.MultiGraph) -> Dict[Tuple[int, int], in
     Parameters
     ----------
     graph:
-        The source graph containing the topology multigraph.
+        The source topology multigraph.
 
     Returns
     -------
@@ -76,38 +66,21 @@ def _build_edge_inputs(aggregated_capacity: Dict[Tuple[int, int], int]) -> List[
     for (node_u, node_v), capacity in sorted(aggregated_capacity.items()):
         edge_inputs.append(EdgeInput(u=node_u, v=node_v, capacity=capacity))
     return edge_inputs
-# -------------------------------------
-
-def _node_path_to_edge_path(node_path: List[int]) -> List[OrientedEdge]:
-    """Convert a node path to an oriented edge path.
-
-    Parameters
-    ----------
-    node_path:
-        Sequence of node indices representing the path.
-
-    Returns
-    -------
-    List[OrientedEdge]
-        List of (source, target) tuples for each edge in the path.
-    """
-    return [(node_u, node_v) for node_u, node_v in pairwise(node_path)]
 
 
 def _build_demand_inputs(
-    graph: nx.MultiGraph,
+    demands: Dict[int, Tuple[int, int, int]],
     route_result: Dict[int, List[Tuple[int, int, int]]],
 ) -> List[DemandInput]:
     """Create DemandInput list from routed demands.
 
-    Only successfully routed demands are included. Each demand's volume
-    is taken from the original GraphData, and the initial edge path is
-    derived from the RouteResult's node path.
+    Each demand's volume is taken from the original demands sequence, 
+    and the initial edge path is taken from route_result.
 
     Parameters
     ----------
-    graph:
-        Source graph containing demand definitions.
+    demands:
+        Source demands sequence.
     route_result:
         Routing result containing the routed paths.
 
@@ -118,15 +91,15 @@ def _build_demand_inputs(
     """
     demand_inputs: List[DemandInput] = []
 
-    for demand_id, node_path in route_result.routed_paths.items():
-        original_demand = graph.demands[demand_id]
-        edge_path = _node_path_to_edge_path(node_path)
+    for demand_id, edge_path_with_keys in route_result.items():
+        demand_source, demand_target, demand_capacity = demands[demand_id]
+        edge_path = [OrientedEdge((node_u, node_v)) for node_u, node_v, _ in edge_path_with_keys]
 
         demand_inputs.append(DemandInput(
             demand_id=DemandID(demand_id),
-            source=original_demand.source,
-            target=original_demand.target,
-            volume=original_demand.bitrate,
+            source=demand_source,
+            target=demand_target,
+            volume=demand_capacity,
             initial_edge_path=edge_path,
         ))
 
@@ -135,6 +108,7 @@ def _build_demand_inputs(
 
 def convert_to_greedy_input(
     graph: nx.MultiGraph,
+    demands: Dict[int, Tuple[int, int, int]],
     route_result: Dict[int, List[Tuple[int, int, int]]],
     random_seed: int | None = None,
 ) -> SpareCapacityGreedyInput:
@@ -142,13 +116,14 @@ def convert_to_greedy_input(
 
     This function:
     1. Aggregates multi-edges into single edges with summed capacity
-    2. Converts routed node paths to edge paths
-    3. Packages everything into the format expected by the greedy algorithm
+    2. Packages everything into the format expected by the greedy algorithm
 
     Parameters
     ----------
     graph:
-        The source graph containing topology and demand information.
+        The source topology graph.
+    demands:
+        The source successfully routed demands sequence.
     route_result:
         The routing solution of MCF problem containing paths for successfully routed demands.
     random_seed:
@@ -161,26 +136,10 @@ def convert_to_greedy_input(
     """
     aggregated_capacity = _aggregate_edge_capacities(graph)
     edge_inputs = _build_edge_inputs(aggregated_capacity)
-    demand_inputs = _build_demand_inputs(graph, route_result)
+    demand_inputs = _build_demand_inputs(demands, route_result)
 
     return SpareCapacityGreedyInput(
         edges=edge_inputs,
         demands=demand_inputs,
         random_seed=random_seed,
     )
-
-
-def compute_total_additional_volume(output: SpareCapacityGreedyOutput) -> int:
-    """Compute the objective value: total sum of add(e) over all edges.
-
-    Parameters
-    ----------
-    output:
-        The output from the greedy spare capacity allocation algorithm.
-
-    Returns
-    -------
-    int
-        Sum of additional volume reservations across all edges.
-    """
-    return sum(output.additional_volume_by_edge.values())
