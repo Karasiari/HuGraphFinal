@@ -10,7 +10,12 @@ from __future__ import annotations
 from itertools import pairwise
 from typing import Dict, List, Tuple
 
-from graph_reader.read_graph import GraphData
+import networkx as nx
+from classes_for_algorithm import (
+    DemandID,
+    DemandInput,
+    EdgeInput
+)
 from spare_capacity_allocation.greedy_spare_capacity_allocation import (
     DemandID,
     DemandInput,
@@ -27,7 +32,7 @@ def _canonical_edge_key(node_a: int, node_b: int) -> Tuple[int, int]:
     return (node_a, node_b) if node_a < node_b else (node_b, node_a)
 
 
-def _aggregate_edge_capacities(graph: GraphData) -> Dict[Tuple[int, int], int]:
+def _aggregate_edge_capacities(graph: nx.MultiGraph) -> Dict[Tuple[int, int], int]:
     """Aggregate parallel edges into single edges with summed capacity.
 
     For a MultiGraph, multiple physical links may exist between the same
@@ -43,15 +48,13 @@ def _aggregate_edge_capacities(graph: GraphData) -> Dict[Tuple[int, int], int]:
     Dict[Tuple[int, int], int]
         Mapping from canonical edge key (min_node, max_node) to total capacity.
     """
-    capacity_per_physical_edge = graph.line_rate * graph.number_of_wavelengths
     aggregated_capacity: Dict[Tuple[int, int], int] = {}
 
-    multigraph = graph.topology_multigraph
-    for node_u, node_v, _ in multigraph.edges(keys=True):
+    for node_u, node_v, capacity in graph.edges(keys=True):
         edge_key = _canonical_edge_key(int(node_u), int(node_v))
         if edge_key not in aggregated_capacity:
             aggregated_capacity[edge_key] = 0
-        aggregated_capacity[edge_key] += capacity_per_physical_edge
+        aggregated_capacity[edge_key] += capacity
 
     return aggregated_capacity
 
@@ -73,7 +76,7 @@ def _build_edge_inputs(aggregated_capacity: Dict[Tuple[int, int], int]) -> List[
     for (node_u, node_v), capacity in sorted(aggregated_capacity.items()):
         edge_inputs.append(EdgeInput(u=node_u, v=node_v, capacity=capacity))
     return edge_inputs
-
+# -------------------------------------
 
 def _node_path_to_edge_path(node_path: List[int]) -> List[OrientedEdge]:
     """Convert a node path to an oriented edge path.
@@ -92,8 +95,8 @@ def _node_path_to_edge_path(node_path: List[int]) -> List[OrientedEdge]:
 
 
 def _build_demand_inputs(
-    graph: GraphData,
-    route_result: RouteResult,
+    graph: nx.MultiGraph,
+    route_result: Dict[int, List[Tuple[int, int, int]]],
 ) -> List[DemandInput]:
     """Create DemandInput list from routed demands.
 
@@ -131,11 +134,11 @@ def _build_demand_inputs(
 
 
 def convert_to_greedy_input(
-    graph: GraphData,
-    route_result: RouteResult,
+    graph: nx.MultiGraph,
+    route_result: Dict[int, List[Tuple[int, int, int]]],
     random_seed: int | None = None,
 ) -> SpareCapacityGreedyInput:
-    """Convert GraphData and RouteResult into SpareCapacityGreedyInput.
+    """Convert topology multigraph (graph) and the result of solving MCF problem (route_result) into SpareCapacityGreedyInput.
 
     This function:
     1. Aggregates multi-edges into single edges with summed capacity
@@ -147,7 +150,7 @@ def convert_to_greedy_input(
     graph:
         The source graph containing topology and demand information.
     route_result:
-        The routing solution containing paths for successfully routed demands.
+        The routing solution of MCF problem containing paths for successfully routed demands.
     random_seed:
         Optional seed for reproducible randomization in the greedy algorithm.
 
