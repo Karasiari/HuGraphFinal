@@ -10,10 +10,16 @@ from .instruments import *
 # --------------------------------------------
 
 def solve_multi_commodity_flow_problem(graph: nx.MultiDiGraph, 
-                                       C_max: float, demands: List[Demand], unsatisfied_subset: List[int], 
+                                       C_max: float, demands_raw: List[Tuple[int, int, int]], 
+                                       unsatisfied_subset: List[int], 
                                        eps: float) -> Tuple[Dict[int, List[Tuple[int, int, int]]], 
                                                             Dict[int, Tuple[int, int, int]],
                                                             bool]:
+  # Step 0: Get right representation for demands
+  demands = []
+  for source, sink, capacity in demands_raw:
+    demands.append(Demand(source, sink, capacity))
+                                                              
   # Step 1: Group demands and create the mapping from i to source-target pairs
   grouped_demands, demand_indices_by_group, i_to_source_target = group_demands_and_create_mapping(demands,
                                                                                                   unsatisfied_subset)
