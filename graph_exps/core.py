@@ -8,8 +8,8 @@ import scipy
 from scipy.sparse.linalg import eigsh
 
 # импорты основных алгоритмов
-from mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
-from mcf_algorithm.main_algorithm import solve_multi_commodity_flow_problem
+from .mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
+from .mcf_algorithm.main_algorithm import solve_multi_commodity_flow_problem
 
 # импорт вспомогательных функций
 from .instruments import *
