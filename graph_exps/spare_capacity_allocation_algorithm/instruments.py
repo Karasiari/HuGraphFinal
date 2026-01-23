@@ -4,7 +4,7 @@ from .classes_for_algorithm import *
 # Preprocessing
 # ----------------------------
 
-def _build_indexed_graph(edge_inputs: Sequence[EdgeInput]) -> Tuple[nx.Graph, List[EdgeKey], List[int]]:
+def build_indexed_graph(edge_inputs: Sequence[EdgeInput]) -> Tuple[nx.Graph, List[EdgeKey], List[int]]:
     """Build an undirected NetworkX graph and assign a compact index to each edge."""
     graph = nx.Graph()
     edge_key_by_index: List[EdgeKey] = []
@@ -17,7 +17,7 @@ def _build_indexed_graph(edge_inputs: Sequence[EdgeInput]) -> Tuple[nx.Graph, Li
                 f"Edge capacity must be non-negative, got {edge.capacity} for edge {edge.u}-{edge.v}."
             )
 
-        key = _canonical_edge_key(edge.u, edge.v)
+        key = canonical_edge_key(edge.u, edge.v)
         if key in seen:
             existing_idx = seen[key]
             if capacity_by_edge[existing_idx] != edge.capacity:
@@ -36,13 +36,13 @@ def _build_indexed_graph(edge_inputs: Sequence[EdgeInput]) -> Tuple[nx.Graph, Li
     return graph, edge_key_by_index, capacity_by_edge
 
 
-def _process_demands(
+def process_demands(
     demand_inputs: Sequence[DemandInput],
     graph: nx.Graph,
     edge_count: int,
-) -> Tuple[Dict[DemandID, _ProcessedDemand], List[int], List[List[DemandID]]]:
+) -> Tuple[Dict[DemandID, ProcessedDemand], List[int], List[List[DemandID]]]:
     """Validate demand paths, derive edge indices, and compute initial edge loads."""
-    demands_by_id: Dict[DemandID, _ProcessedDemand] = {}
+    demands_by_id: Dict[DemandID, ProcessedDemand] = {}
     initial_load_by_edge: List[int] = [0] * edge_count
     demands_using_edge: List[List[DemandID]] = [[] for _ in range(edge_count)]
 
@@ -90,7 +90,7 @@ def _process_demands(
         for edge_idx in unique_edge_indices:
             demands_using_edge[edge_idx].append(demand.demand_id)
 
-        demands_by_id[demand.demand_id] = _ProcessedDemand(
+        demands_by_id[demand.demand_id] = ProcessedDemand(
             demand_id=demand.demand_id,
             source=demand.source,
             target=demand.target,
@@ -102,13 +102,13 @@ def _process_demands(
     return demands_by_id, initial_load_by_edge, demands_using_edge
 
 
-def _preprocess_instance(input_data: SpareCapacityGreedyInput) -> _PreprocessedInstance:
+def preprocess_instance(input_data: SpareCapacityGreedyInput) -> PreprocessedInstance:
     """Transform raw input into an indexed instance and validate initial feasibility."""
-    graph, edge_key_by_index, capacity_by_edge = _build_indexed_graph(input_data.edges)
+    graph, edge_key_by_index, capacity_by_edge = build_indexed_graph(input_data.edges)
     if not edge_key_by_index:
         raise ValueError("Input graph must contain at least one edge.")
 
-    demands_by_id, initial_load_by_edge, demands_using_edge = _process_demands(
+    demands_by_id, initial_load_by_edge, demands_using_edge = process_demands(
         input_data.demands, graph, edge_count=len(edge_key_by_index)
     )
 
@@ -122,7 +122,7 @@ def _preprocess_instance(input_data: SpareCapacityGreedyInput) -> _PreprocessedI
             )
         slack_by_edge.append(slack)
 
-    return _PreprocessedInstance(
+    return PreprocessedInstance(
         graph=graph,
         directed_graph_view=graph.to_directed(as_view=True),
         edge_key_by_index=edge_key_by_index,
