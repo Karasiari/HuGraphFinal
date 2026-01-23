@@ -43,7 +43,7 @@ class SpareCapacityGreedyInput:
     random_seed: Optional[int] = None
 
 
-def _canonical_edge_key(u: Node, v: Node) -> EdgeKey:
+def canonical_edge_key(u: Node, v: Node) -> EdgeKey:
     """Return a deterministic key for an undirected edge.
 
     The key is independent of the (u, v) order and is stable for common
@@ -60,11 +60,11 @@ def _canonical_edge_key(u: Node, v: Node) -> EdgeKey:
 
 
 # ----------------------------
-# Internal indexed data model
+# Indexed data model
 # ----------------------------
 
 @dataclass(frozen=True, slots=True)
-class _ProcessedDemand:
+class ProcessedDemand:
     """Demand enriched with derived edge-index information."""
     demand_id: DemandID
     source: Node
@@ -75,7 +75,7 @@ class _ProcessedDemand:
 
 
 @dataclass(slots=True)
-class _PositiveTouchedArray:
+class PositiveTouchedArray:
     """Mutable non-negative int array with fast reset.
 
     Only supports monotone (non-decreasing) updates via `increment()`.
@@ -112,7 +112,7 @@ class _PositiveTouchedArray:
 
 
 @dataclass(slots=True)
-class _PreprocessedInstance:
+class PreprocessedInstance:
     """Problem instance transformed to edge-indexed structures for fast access."""
     graph: nx.Graph
     directed_graph_view: nx.DiGraph
@@ -124,7 +124,7 @@ class _PreprocessedInstance:
 
 
 @dataclass(slots=True)
-class _FailureScenarioState:
+class FailureScenarioState:
     """Mutable state while processing one failed edge scenario."""
     failed_edge_index: int
     leftover_by_edge: _PositiveTouchedArray
