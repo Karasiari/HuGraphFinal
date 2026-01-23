@@ -5,7 +5,7 @@ import numpy as np
 # вспомогательные функции для MCFP (Maximum Concurrent Flow Problem)
 # ------------------------------------------------------------------
 
-def get_incidence_matrix_for_mcfp(graph: nx.DiGraph) -> np.ndarray:
+def _get_incidence_matrix_for_mcfp(graph: nx.DiGraph) -> np.ndarray:
     """
     Создаем incidence matrix
     параметры: nx.DiGraph
@@ -15,7 +15,7 @@ def get_incidence_matrix_for_mcfp(graph: nx.DiGraph) -> np.ndarray:
     incidence_matrix = incidence_matrix.toarray()
     return incidence_matrix
 
-def get_capacities_for_mcfp(graph: nx.DiGraph) -> np.ndarray:
+def _get_capacities_for_mcfp(graph: nx.DiGraph) -> np.ndarray:
     """
     Достаем capacities
     параметры: nx.DiGraph, граф с capacities (key: weights) на ребрах
