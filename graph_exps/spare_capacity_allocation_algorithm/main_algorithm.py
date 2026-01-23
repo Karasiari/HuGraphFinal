@@ -1,5 +1,5 @@
-import .classes_for_algorithm
-import .instruments
+from .classes_for_algorithm import *
+from .instruments import *
 
 
 @dataclass(frozen=True, slots=True)
