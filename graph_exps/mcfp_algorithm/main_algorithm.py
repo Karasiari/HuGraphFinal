@@ -2,7 +2,10 @@ import cvxpy as cp
 from cvxpy import SolverError
 
 # импорт вспомогательных функций под наш алгоритм
-from .instruments import *
+from .instruments import (
+_get_incidence_matrix_for_mcfp,
+_get_capacities_for_mcfp
+)
 
 # -----------------
 # основной алгоритм
