@@ -42,3 +42,19 @@ class SpareCapacityGreedyInput:
     demands: Sequence[DemandInput]
     random_seed: Optional[int] = None
 
+
+def _canonical_edge_key(u: Node, v: Node) -> EdgeKey:
+    """Return a deterministic key for an undirected edge.
+
+    The key is independent of the (u, v) order and is stable for common
+    primitive node types (ints, strings, tuples, ...).
+    """
+    if u == v:
+        return (u, v)
+
+    def sort_key(x: Node) -> Tuple[str, str]:
+        return (type(x).__name__, repr(x))
+
+    a, b = sorted((u, v), key=sort_key)
+    return (a, b)
+
