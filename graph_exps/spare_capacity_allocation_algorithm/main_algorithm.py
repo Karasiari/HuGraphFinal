@@ -17,10 +17,10 @@ class SpareCapacityGreedyOutput:
 # Scenario utilities
 # ----------------------------
 
-def _compute_leftover_space(
-    leftover: _PositiveTouchedArray,
+def compute_leftover_space(
+    leftover: PositiveTouchedArray,
     affected_demand_ids: Sequence[DemandID],
-    demands_by_id: Mapping[DemandID, _ProcessedDemand],
+    demands_by_id: Mapping[DemandID, ProcessedDemand],
 ) -> None:
     """Compute per-edge freed volume when the failed edge drops `affected_demand_ids`."""
     leftover.clear()
@@ -32,8 +32,8 @@ def _compute_leftover_space(
             leftover.increment(edge_idx, demand.volume)
 
 
-def _make_weight1(
-    scenario: _FailureScenarioState,
+def make_weight1(
+    scenario: FailureScenarioState,
     demand_volume: int,
 ) -> Callable[[Node, Node, Mapping[str, Any]], Optional[int]]:
     """Build the Objective-1 weight function.
@@ -66,10 +66,10 @@ def _make_weight1(
     return weight
 
 
-def _find_backup_path_nodes(
-    instance: _PreprocessedInstance,
-    scenario: _FailureScenarioState,
-    demand: _ProcessedDemand,
+def find_backup_path_nodes(
+    instance: PreprocessedInstance,
+    scenario: FailureScenarioState,
+    demand: ProcessedDemand,
 ) -> List[Node]:
     """Compute the demand's backup path as a node sequence.
 
@@ -82,7 +82,7 @@ def _find_backup_path_nodes(
     if demand.source == demand.target:
         return [demand.source]
 
-    weight1 = _make_weight1(scenario, demand_volume=demand.volume)
+    weight1 = make_weight1(scenario, demand_volume=demand.volume)
 
     try:
         dist_from_source = nx.single_source_dijkstra_path_length(
@@ -142,10 +142,10 @@ def _find_backup_path_nodes(
         ) from exc
 
 
-def _apply_backup_routing(
-    instance: _PreprocessedInstance,
-    scenario: _FailureScenarioState,
-    demand: _ProcessedDemand,
+def apply_backup_routing(
+    instance: PreprocessedInstance,
+    scenario: FailureScenarioState,
+    demand: ProcessedDemand,
     backup_path_nodes: Sequence[Node],
 ) -> None:
     """Apply the chosen backup route: update global add and per-scenario routed volume."""
@@ -181,7 +181,7 @@ def _apply_backup_routing(
         scenario.routed_by_edge.increment(edge_idx, volume)
 
 
-def _nodes_to_oriented_edge_path(nodes_path: Sequence[Node]) -> EdgePath:
+def nodes_to_oriented_edge_path(nodes_path: Sequence[Node]) -> EdgePath:
     """Convert a node path [n0, n1, ..., nk] into an oriented edge path [(n0,n1),...,(n{k-1},nk)]."""
     return [(u, v) for u, v in pairwise(nodes_path)]
 
@@ -224,9 +224,9 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         rng.shuffle(affected_demands)
 
         routed.clear()
-        _compute_leftover_space(leftover, affected_demands, instance.demands_by_id)
+        compute_leftover_space(leftover, affected_demands, instance.demands_by_id)
 
-        scenario = _FailureScenarioState(
+        scenario = FailureScenarioState(
             failed_edge_index=failed_edge_idx,
             leftover_by_edge=leftover,
             routed_by_edge=routed,
@@ -237,9 +237,9 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         demand_to_backup_path: Dict[DemandID, EdgePath] = {}
         for demand_id in affected_demands:
             demand = instance.demands_by_id[demand_id]
-            backup_nodes = _find_backup_path_nodes(instance, scenario, demand)
-            _apply_backup_routing(instance, scenario, demand, backup_nodes)
-            demand_to_backup_path[demand_id] = _nodes_to_oriented_edge_path(backup_nodes)
+            backup_nodes = find_backup_path_nodes(instance, scenario, demand)
+            apply_backup_routing(instance, scenario, demand, backup_nodes)
+            demand_to_backup_path[demand_id] = nodes_to_oriented_edge_path(backup_nodes)
 
         reserve_paths_by_failed_edge[instance.edge_key_by_index[failed_edge_idx]] = demand_to_backup_path
 
