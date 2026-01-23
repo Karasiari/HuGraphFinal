@@ -223,7 +223,7 @@ def subdivide_flows_by_paths(flow, demand_indices_by_group, ungrouped_demands, i
 
 
 # Function to subtract flow from capacities in a graph copy
-def _subtract_flow_from_capacity(G, flow_paths, ungrouped_demands):
+def subtract_flow_from_capacity(G, flow_paths, ungrouped_demands):
     graph_copy = G.copy()
 
     # Subtract flow paths from graph copy
