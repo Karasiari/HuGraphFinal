@@ -58,3 +58,76 @@ def _canonical_edge_key(u: Node, v: Node) -> EdgeKey:
     a, b = sorted((u, v), key=sort_key)
     return (a, b)
 
+
+# ----------------------------
+# Internal indexed data model
+# ----------------------------
+
+@dataclass(frozen=True, slots=True)
+class _ProcessedDemand:
+    """Demand enriched with derived edge-index information."""
+    demand_id: DemandID
+    source: Node
+    target: Node
+    volume: int
+    initial_edge_indices: Tuple[int, ...]
+    unique_initial_edge_indices: FrozenSet[int]
+
+
+@dataclass(slots=True)
+class _PositiveTouchedArray:
+    """Mutable non-negative int array with fast reset.
+
+    Only supports monotone (non-decreasing) updates via `increment()`.
+    `clear()` resets only indices that were modified since the last clear.
+    """
+    values: List[int]
+    touched_indices: List[int]
+    was_touched: List[bool]
+
+    @classmethod
+    def zeros(cls, size: int) -> "_PositiveTouchedArray":
+        """Create a zero-initialized touched array of length `size`."""
+        return cls(values=[0] * size, touched_indices=[], was_touched=[False] * size)
+
+    def increment(self, index: int, delta: int) -> None:
+        """Increase values[index] by delta (delta must be >= 0)."""
+        if delta == 0:
+            return
+        if delta < 0:
+            raise ValueError("Negative increments are not supported.")
+
+        if not self.was_touched[index]:
+            self.was_touched[index] = True
+            self.touched_indices.append(index)
+
+        self.values[index] += delta
+
+    def clear(self) -> None:
+        """Reset all touched indices back to zero."""
+        for idx in self.touched_indices:
+            self.values[idx] = 0
+            self.was_touched[idx] = False
+        self.touched_indices.clear()
+
+
+@dataclass(slots=True)
+class _PreprocessedInstance:
+    """Problem instance transformed to edge-indexed structures for fast access."""
+    graph: nx.Graph
+    directed_graph_view: nx.DiGraph
+    edge_key_by_index: List[EdgeKey]
+    capacity_by_edge: List[int]
+    slack_by_edge: List[int]
+    demands_by_id: Dict[DemandID, _ProcessedDemand]
+    demands_using_edge: List[List[DemandID]]  # edge_idx -> [demand_id,...]
+
+
+@dataclass(slots=True)
+class _FailureScenarioState:
+    """Mutable state while processing one failed edge scenario."""
+    failed_edge_index: int
+    leftover_by_edge: _PositiveTouchedArray
+    routed_by_edge: _PositiveTouchedArray
+    add_by_edge: List[int]      # global, updated across scenarios
+    slack_by_edge: List[int]    # constant (capacity - initial load)
