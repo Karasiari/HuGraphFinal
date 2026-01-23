@@ -18,27 +18,27 @@ def solve_multi_commodity_flow_problem(graph: nx.MultiDiGraph,
     demands.append(Demand(source, sink, capacity))
                                                               
   # Step 1: Group demands and create the mapping from i to source-target pairs
-  grouped_demands, demand_indices_by_group, i_to_source_target = group_demands_and_create_mapping(demands,
+  grouped_demands, demand_indices_by_group, i_to_source_target = _group_demands_and_create_mapping(demands,
                                                                                                   unsatisfied_subset)
         
   # Step 2: Run the multicommodity flow procedure to generate the flow and l(e) values
-  flow = multi_commodity_flow(graph, grouped_demands, C_max, eps)
+  flow = _multi_commodity_flow(graph, grouped_demands, C_max, eps)
                                                               
   # Step 3: Scale the flow to make it feasible (ensures flows respect edge capacities)
-  scale_flows(flow, graph, C_max)
+  _scale_flows(flow, graph, C_max)
 
   # Step 4: Subdivide flows by paths for ungrouped demands
-  flow_paths, satisfied_demands = subdivide_flows_by_paths(flow, demand_indices_by_group, demands,
+  flow_paths, satisfied_demands = _subdivide_flows_by_paths(flow, demand_indices_by_group, demands,
                                                            i_to_source_target)
 
   # Step 5: Subtract the satisfied demands from the graph capacity
-  graph_copy = subtract_flow_from_capacity(graph, flow_paths, demands)
+  graph_copy = _subtract_flow_from_capacity(graph, flow_paths, demands)
 
   satisfied_demands_set = set(satisfied_demands)
   left_to_satisfy = unsatisfied_subset - satisfied_demands_set
         
   # Step 6: Try to fulfill remaining demands in the leftover graph
-  remaining_paths, remaining_satisfied_demands = fulfill_remaining_demands(graph_copy, demands,
+  remaining_paths, remaining_satisfied_demands = _fulfill_remaining_demands(graph_copy, demands,
                                                                            demand_indices_by_group,
                                                                            i_to_source_target, left_to_satisfy)
 
