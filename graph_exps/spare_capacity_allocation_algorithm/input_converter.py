@@ -8,7 +8,7 @@ allocation algorithm.
 from typing import Dict, List, Tuple
 
 import networkx as nx
-from classes_for_algorithm import (
+from .classes_for_algorithm import (
     DemandID,
     DemandInput,
     EdgeInput,
