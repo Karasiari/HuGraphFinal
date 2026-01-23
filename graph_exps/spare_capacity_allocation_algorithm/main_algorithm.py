@@ -214,8 +214,8 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
     failure_edge_indices = list(range(edge_count))
     rng.shuffle(failure_edge_indices)
 
-    leftover = _PositiveTouchedArray.zeros(edge_count)
-    routed = _PositiveTouchedArray.zeros(edge_count)
+    leftover = PositiveTouchedArray.zeros(edge_count)
+    routed = PositiveTouchedArray.zeros(edge_count)
 
     reserve_paths_by_failed_edge: Dict[EdgeKey, Dict[DemandID, EdgePath]] = {}
 
