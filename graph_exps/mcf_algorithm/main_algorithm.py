@@ -1,6 +1,3 @@
-from typing import Dict, Tuple, List
-import networkx as nx
-
 # импорт вспомогательных функций под наш алгоритм
 from .instruments import *
 
