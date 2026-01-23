@@ -6,11 +6,11 @@ import random
 import networkx as nx
 
 DemandID = NewType("DemandID", int)
-#EdgeId = NewType("EdgeID", int)
+EdgeId = NewType("EdgeID", int)
 Node = Hashable
-#EdgeKey = Tuple[Node, Node]
+EdgeKey = Tuple[Node, Node]
 OrientedEdge = Tuple[Node, Node]
-#EdgePath = List[OrientedEdge]
+EdgePath = List[OrientedEdge]
 
 @dataclass(frozen=True, slots=True)
 class EdgeInput:
