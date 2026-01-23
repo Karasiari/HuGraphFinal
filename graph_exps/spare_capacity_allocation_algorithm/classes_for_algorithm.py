@@ -119,7 +119,7 @@ class PreprocessedInstance:
     edge_key_by_index: List[EdgeKey]
     capacity_by_edge: List[int]
     slack_by_edge: List[int]
-    demands_by_id: Dict[DemandID, _ProcessedDemand]
+    demands_by_id: Dict[DemandID, ProcessedDemand]
     demands_using_edge: List[List[DemandID]]  # edge_idx -> [demand_id,...]
 
 
@@ -127,7 +127,7 @@ class PreprocessedInstance:
 class FailureScenarioState:
     """Mutable state while processing one failed edge scenario."""
     failed_edge_index: int
-    leftover_by_edge: _PositiveTouchedArray
-    routed_by_edge: _PositiveTouchedArray
+    leftover_by_edge: PositiveTouchedArray
+    routed_by_edge: PositiveTouchedArray
     add_by_edge: List[int]      # global, updated across scenarios
     slack_by_edge: List[int]    # constant (capacity - initial load)
