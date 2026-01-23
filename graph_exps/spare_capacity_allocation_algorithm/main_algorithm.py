@@ -205,7 +205,7 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         - global per-edge reservations `add(e)`
         - per-failed-edge backup paths for affected demands
     """
-    instance = _preprocess_instance(input_data)
+    instance = preprocess_instance(input_data)
 
     edge_count = len(instance.edge_key_by_index)
     add_by_edge: List[int] = [0] * edge_count
