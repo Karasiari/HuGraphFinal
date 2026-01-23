@@ -1,12 +1,5 @@
 # импорт вспомогательных функций под наш алгоритм
-from .instruments import (Demand,
-                          _group_demands_and_create_mapping,
-                          _multi_commodity_flow,
-                          _scale_flows,
-                          _subdivide_flows_by_paths,
-                          _subtract_flow_from_capacity,
-                          _fulfill_remaining_demands
-                          )
+import .instruments
 
 # --------------------------------------------
 # основная функция для решения MCF
