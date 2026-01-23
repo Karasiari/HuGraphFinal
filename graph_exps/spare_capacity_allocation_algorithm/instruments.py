@@ -1,4 +1,4 @@
-import .classes_for_algorithm
+from .classes_for_algorithm import *
 
 # ----------------------------
 # Preprocessing
