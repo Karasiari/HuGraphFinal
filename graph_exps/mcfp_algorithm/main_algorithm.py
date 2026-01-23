@@ -10,8 +10,8 @@ from .instruments import *
 
 def solve_max_concurrent_flow_problem(graph: nx.DiGraph, demands_laplacian: np.ndarray, solver_flag: bool) -> float:
   # получаем incidence matrix и capacities рёбер
-  incidence_mat = get_incidence_matrix_for_mcfp(graph)
-  bandwidth = get_capacities_for_mcfp(graph)
+  incidence_mat = _get_incidence_matrix_for_mcfp(graph)
+  bandwidth = _get_capacities_for_mcfp(graph)
 
   # определяем переменные потока и гамму
   flow = cp.Variable((len(graph.edges), len(graph.nodes)))
