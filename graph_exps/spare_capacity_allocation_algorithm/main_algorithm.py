@@ -1,4 +1,3 @@
-from .classes_for_algorithm import *
 from .instruments import *
 
 
