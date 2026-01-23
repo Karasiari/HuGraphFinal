@@ -2,7 +2,7 @@ import cvxpy as cp
 from cvxpy import SolverError
 
 # импорт вспомогательных функций под наш алгоритм
-import .instruments
+import instruments
 
 # -----------------
 # основной алгоритм
