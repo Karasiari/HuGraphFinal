@@ -24,6 +24,7 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         - per-failed-edge backup paths for affected demands
     """
     instance = preprocess_instance(input_data)
+    epsilon = input_data.epsilon
 
     total_demands_volume = sum([demand.volume for demand in input_data.demands])
     successfully_rerouted_demands_volume = 0
@@ -36,6 +37,7 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
     rng.shuffle(failure_edge_indices)
 
     leftover = PositiveTouchedArray.zeros(edge_count)
+    leftover_wo_epsilon = PositiveTouchedArray.zeros(edge_count)
     routed = PositiveTouchedArray.zeros(edge_count)
 
     reserve_paths_by_failed_edge: Dict[EdgeKey, Dict[DemandID, EdgePath]] = {}
@@ -47,9 +49,9 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         rng.shuffle(affected_demands)
 
         routed.clear()
-        compute_leftover_space(leftover, affected_demands, instance.demands_by_id)
+        compute_leftover_space(leftover, leftover_wo_epsilon, affected_demands, instance.demands_by_id)
 
-        remaining_network_for_edge = build_remaining_network_for_failed_edge(instance, failed_edge_idx, leftover)
+        remaining_network_for_edge = build_remaining_network_for_failed_edge(instance, failed_edge_idx, leftover_wo_epsilon)
         remaining_network_by_failed_edge[instance.edge_key_by_index[failed_edge_idx]] = remaining_network_for_edge
 
         scenario = FailureScenarioState(
