@@ -150,7 +150,7 @@ def compute_leftover_space(
             continue
         for edge_idx in demand.initial_edge_indices:
             leftover.increment(edge_idx, demand.volume)
-
+            
 
 def build_remaining_network_for_failed_edge(
     instance: PreprocessedInstance,
