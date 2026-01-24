@@ -293,6 +293,7 @@ def apply_backup_routing(
         if allowance < volume:
             add[edge_idx] += volume - allowance
             if add[edge_idx] > slack[edge_idx]:
+                add[edge_idx] -= volume - allowance
                 raise ValueError(
                     f"Internal error: add exceeds physical slack on edge {instance.edge_key_by_index[edge_idx]}. "
                     f"add={add[edge_idx]}, slack={slack[edge_idx]}."
