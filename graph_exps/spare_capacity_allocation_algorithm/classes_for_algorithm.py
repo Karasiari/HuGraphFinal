@@ -40,6 +40,7 @@ class SpareCapacityGreedyInput:
     """Complete input for the greedy spare-capacity allocation algorithm."""
     edges: Sequence[EdgeInput]
     demands: Sequence[DemandInput]
+    epsilon: Optional[float] = 1.0
     random_seed: Optional[int] = None
 
 
