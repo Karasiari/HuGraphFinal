@@ -61,6 +61,9 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         routed.clear()
         compute_leftover_space(leftover, affected_demands, instance.demands_by_id)
 
+        remaining_network_for_edge = build_remaining_network_for_failed_edge(instance, failed_edge_idx, leftover)
+        remaining_network_by_failed_edge[instance.edge_key_by_index[failed_edge_idx]] = remaining_network_for_edge
+
         scenario = FailureScenarioState(
             failed_edge_index=failed_edge_idx,
             leftover_by_edge=leftover,
