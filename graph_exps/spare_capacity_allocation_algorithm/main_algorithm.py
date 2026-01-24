@@ -1,27 +1,6 @@
 from .instruments import *
 
 
-@dataclass(frozen=True, slots=True)
-class SpareCapacityGreedyOutput:
-    """Greedy algorithm output.
-
-    - `remaining_network_by_failed_edge[e]` is the remaining network for the scenario with failed edge e
-    - `algorithm_failure_flag` is the flag to identify a failure of our algorithm 
-       to allocate all demands in all scenarious
-    - `successfully_rerouted_demands_ratio` is the ratio 
-       sum(volume of demand) of successfully rerouted demands / sum(volume of demand) of all demands
-    - `additional_volume_by_edge[e]` is the global `add(e)` reservation for edge e.
-      Keys are canonical undirected edge keys.
-    - `reserve_paths_by_failed_edge[e][demand_id]` is the backup (edge) path used by
-      `demand_id` when edge `e` fails.
-    """
-    remaining_network_by_failed_edge: Dict[EdgeKey, nx.Graph]
-    algorithm_failure_flag: bool
-    successfully_rerouted_demands_ratio: float
-    additional_volume_by_edge: Dict[EdgeKey, int]
-    reserve_paths_by_failed_edge: Dict[EdgeKey, Dict[DemandID, EdgePath]]
-
-
 # ----------------------------
 # Public API
 # ----------------------------
@@ -104,6 +83,7 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
     return SpareCapacityGreedyOutput(
         remaining_network_by_failed_edge=remaining_network_by_failed_edge,
         algorithm_failure_flag=algorithm_failure_flag,
+        successfully_rerouted_demands_ratio=successfully_rerouted_demands_ratio,
         additional_volume_by_edge=additional_volume_by_edge,
         reserve_paths_by_failed_edge=reserve_paths_by_failed_edge,
     )
