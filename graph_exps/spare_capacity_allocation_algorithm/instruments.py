@@ -152,12 +152,12 @@ def compute_leftover_space(
             leftover.increment(edge_idx, demand.volume)
 
 
-def build_remaining_network_for_edge_failure(
+def build_remaining_network_for_failed_edge(
     instance: PreprocessedInstance,
     failed_edge_index: int,
     leftover_by_edge: PositiveTouchedArray
 ) -> nx.Graph:
-    """Build an undirected NetworkX graph of a remaining network under the edge failure scenario"""
+    """Build an undirected NetworkX graph of a remaining network for the failed edge"""
     graph = nx.Graph()
     graph.add_nodes_from(instance.graph.nodes())
     leftover = leftover_by_edge.values
