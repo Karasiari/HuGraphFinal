@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from itertools import pairwise
 from typing import Any, Callable, Dict, FrozenSet, Hashable, List, Mapping, NewType, Optional, Sequence, Tuple
 import random
-import copy
 
 import networkx as nx
 
