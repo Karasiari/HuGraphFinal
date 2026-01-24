@@ -152,6 +152,25 @@ def compute_leftover_space(
             leftover.increment(edge_idx, demand.volume)
 
 
+def build_remaining_network_for_edge_failure(
+    instance: PreprocessedInstance,
+    failed_edge_index: int,
+    leftover_by_edge: PositiveTouchedArray
+) -> nx.Graph:
+    """Build an undirected NetworkX graph of a remaining network under the edge failure scenario"""
+    graph = nx.Graph()
+    graph.add_nodes_from(instance.graph.nodes())
+    leftover = leftover_by_edge.values
+
+    for edge_index, edge_key in enumerate(instance.edge_key_by_index):
+        if edge_index != failed_edge_index:
+            edge_capacity = instance.slack_by_edge[edge_index] + leftover[edge_index]
+            if edge_capacity > 0:
+                graph.add_edge(edge_key[0], edge_key[1], capacity=edge_capacity)
+
+    return graph
+    
+
 def make_weight1(
     scenario: FailureScenarioState,
     demand_volume: int,
