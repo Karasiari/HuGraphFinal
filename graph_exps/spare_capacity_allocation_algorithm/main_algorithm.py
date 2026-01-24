@@ -25,6 +25,9 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
     """
     instance = preprocess_instance(input_data)
 
+    total_demands_volume = sum([demand.volume for demand in input_data.demands])
+    successfully_rerouted_demands_volume = 0
+
     edge_count = len(instance.edge_key_by_index)
     add_by_edge: List[int] = [0] * edge_count
 
@@ -71,6 +74,7 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
                 algorithm_failure_flag = True
                 break
             demand_to_backup_path[demand_id] = nodes_to_oriented_edge_path(backup_nodes)
+            successfully_rerouted_demands_volume += demand.volume
 
         reserve_paths_by_failed_edge[instance.edge_key_by_index[failed_edge_idx]] = demand_to_backup_path
         if algorithm_failure_flag:
@@ -79,6 +83,8 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
     additional_volume_by_edge = {
         instance.edge_key_by_index[edge_idx]: add_by_edge[edge_idx] for edge_idx in range(edge_count)
     }
+
+    successfully_rerouted_demands_ratio = successfully_rerouted_demands_volume / total_demands_volume
 
     return SpareCapacityGreedyOutput(
         remaining_network_by_failed_edge=remaining_network_by_failed_edge,
