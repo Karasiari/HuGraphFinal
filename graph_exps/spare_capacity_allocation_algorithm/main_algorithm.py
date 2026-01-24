@@ -35,6 +35,9 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
 
     Returns:
       A `SpareCapacityGreedyOutput` containing:
+        - per-failed-edge remaining networks
+        - algorithm failure flag
+        - successfully rerouted demands ratio
         - global per-edge reservations `add(e)`
         - per-failed-edge backup paths for affected demands
     """
