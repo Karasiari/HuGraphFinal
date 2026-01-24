@@ -65,8 +65,14 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         demand_to_backup_path: Dict[DemandID, EdgePath] = {}
         for demand_id in affected_demands:
             demand = instance.demands_by_id[demand_id]
-            backup_nodes = find_backup_path_nodes(instance, scenario, demand)
-            apply_backup_routing(instance, scenario, demand, backup_nodes)
+            try:
+                backup_nodes = find_backup_path_nodes(instance, scenario, demand)
+            except ValueError:
+                #останавливаемся и возвращаем имеющееся прокладка не удалась
+            try:
+                apply_backup_routing(instance, scenario, demand, backup_nodes)
+            except ValueError:
+                #останавливаемся и возвращаем имеющееся прокладка не удалась
             demand_to_backup_path[demand_id] = nodes_to_oriented_edge_path(backup_nodes)
 
         reserve_paths_by_failed_edge[instance.edge_key_by_index[failed_edge_idx]] = demand_to_backup_path
