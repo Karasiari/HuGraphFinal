@@ -110,6 +110,7 @@ def convert_to_greedy_input(
     graph: nx.MultiGraph,
     demands: Dict[int, Tuple[int, int, int]],
     route_result: Dict[int, List[Tuple[int, int, int]]],
+    epsilon: float = 1.0,
     random_seed: int | None = None,
 ) -> SpareCapacityGreedyInput:
     """Convert topology multigraph (graph) and the result of solving MCF problem (route_result) into SpareCapacityGreedyInput.
@@ -126,6 +127,8 @@ def convert_to_greedy_input(
         The source successfully routed demands sequence.
     route_result:
         The routing solution of MCF problem containing paths for successfully routed demands.
+    epsilon:
+        Scaling parameter to reserve additional demands in allocation algorithm.
     random_seed:
         Optional seed for reproducible randomization in the greedy algorithm.
 
@@ -141,5 +144,6 @@ def convert_to_greedy_input(
     return SpareCapacityGreedyInput(
         edges=edge_inputs,
         demands=demand_inputs,
+        epsilon=epsilon,
         random_seed=random_seed,
     )
