@@ -24,7 +24,6 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         - per-failed-edge backup paths for affected demands
     """
     instance = preprocess_instance(input_data)
-    epsilon = input_data.epsilon
 
     total_demands_volume = sum([demand.volume for demand in input_data.demands])
     successfully_rerouted_demands_volume = 0
