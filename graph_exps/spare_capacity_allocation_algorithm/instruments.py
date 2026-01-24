@@ -139,17 +139,21 @@ def preprocess_instance(input_data: SpareCapacityGreedyInput) -> PreprocessedIns
 
 def compute_leftover_space(
     leftover: PositiveTouchedArray,
+    leftover_wo_epsilon: PositiveTouchedArray,
+    epsilon: float,
     affected_demand_ids: Sequence[DemandID],
     demands_by_id: Mapping[DemandID, ProcessedDemand],
 ) -> None:
     """Compute per-edge freed volume when the failed edge drops `affected_demand_ids`."""
     leftover.clear()
+    leftover_wo_epsilon.clear()
     for demand_id in affected_demand_ids:
         demand = demands_by_id[demand_id]
         if demand.volume == 0:
             continue
         for edge_idx in demand.initial_edge_indices:
-            leftover.increment(edge_idx, demand.volume)
+            leftover.increment(edge_idx, int(demand.volume * epsilon))
+            leftover_wo_epsilon.increment(edge_idx, demand.volume)
 
 
 def build_remaining_network_for_failed_edge(
