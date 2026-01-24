@@ -5,11 +5,16 @@ from .instruments import *
 class SpareCapacityGreedyOutput:
     """Greedy algorithm output.
 
+    - `remaining_network_by_failed_edge[e]` is the remaining network for the scenario with failed edge e
+    - `algorithm_failure_flag` is the flag to identify a failure of our algorithm 
+       to allocate all demands in all scenarious
     - `additional_volume_by_edge[e]` is the global `add(e)` reservation for edge e.
       Keys are canonical undirected edge keys.
     - `reserve_paths_by_failed_edge[e][demand_id]` is the backup (edge) path used by
       `demand_id` when edge `e` fails.
     """
+    remaining_network_by_failed_edge: Dict[EdgeKey, nx.Graph]
+    algorithm_failure_flag: bool
     additional_volume_by_edge: Dict[EdgeKey, int]
     reserve_paths_by_failed_edge: Dict[EdgeKey, Dict[DemandID, EdgePath]]
 
@@ -46,6 +51,8 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
     routed = PositiveTouchedArray.zeros(edge_count)
 
     reserve_paths_by_failed_edge: Dict[EdgeKey, Dict[DemandID, EdgePath]] = {}
+    algorithm_failure_flag: bool = False
+    remaining_network_by_failed_edge: Dict[EdgeKey, nx.Graph] = {}
 
     for failed_edge_idx in failure_edge_indices:
         affected_demands = list(instance.demands_using_edge[failed_edge_idx])
@@ -68,20 +75,26 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
             try:
                 backup_nodes = find_backup_path_nodes(instance, scenario, demand)
             except ValueError:
-                #останавливаемся и возвращаем имеющееся прокладка не удалась
+                algorithm_failure_flag = True
+                break
             try:
                 apply_backup_routing(instance, scenario, demand, backup_nodes)
             except ValueError:
-                #останавливаемся и возвращаем имеющееся прокладка не удалась
+                algorithm_failure_flag = True
+                break
             demand_to_backup_path[demand_id] = nodes_to_oriented_edge_path(backup_nodes)
 
         reserve_paths_by_failed_edge[instance.edge_key_by_index[failed_edge_idx]] = demand_to_backup_path
+        if algorithm_failure_flag:
+            break
 
     additional_volume_by_edge = {
         instance.edge_key_by_index[edge_idx]: add_by_edge[edge_idx] for edge_idx in range(edge_count)
     }
 
     return SpareCapacityGreedyOutput(
+        remaining_network_by_failed_edge=remaining_network_by_failed_edge,
+        algorithm_failure_flag=algorithm_failure_flag,
         additional_volume_by_edge=additional_volume_by_edge,
         reserve_paths_by_failed_edge=reserve_paths_by_failed_edge,
     )
