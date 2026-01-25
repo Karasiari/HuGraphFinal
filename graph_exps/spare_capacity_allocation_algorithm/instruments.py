@@ -155,20 +155,32 @@ def compute_leftover_space(
 def build_remaining_network_for_failed_edge(
     instance: PreprocessedInstance,
     failed_edge_idx: int,
-    leftover_by_edge: PositiveTouchedArray
-) -> nx.Graph:
-    """Build an undirected NetworkX graph of a remaining network for the failed edge"""
-    graph = nx.Graph()
-    graph.add_nodes_from(instance.graph.nodes())
+    leftover_by_edge: PositiveTouchedArray,
+    affected_demands: Sequence[DemandID]
+) -> Tuple[nx.Graph, nx.MultiDiGraph]:
+    """
+    Build an undirected NetworkX graph of a remaining topology network for the failed edge
+    and a directed NetworkX multigraph of a remaining traffic network for the failed edge
+    """
+    topology_graph = nx.Graph()
+    traffic_graph = nx.MultiDiGraph()
+    topology_graph.add_nodes_from(instance.graph.nodes())
+    traffic_graph.add_nodes_from(instance.graph.nodes())
     leftover = leftover_by_edge.values
 
     for edge_idx, edge_key in enumerate(instance.edge_key_by_index):
         if edge_idx != failed_edge_idx:
             edge_capacity = instance.slack_by_edge[edge_idx] + leftover[edge_idx]
             if edge_capacity > 0:
-                graph.add_edge(edge_key[0], edge_key[1], capacity=edge_capacity)
+                topology_graph.add_edge(edge_key[0], edge_key[1], capacity=edge_capacity)
 
-    return graph
+    for demand_id in affected_demands:
+        demand = instance.demands_by_id[demand_id]
+        if demand.volume <= 0:
+            continue
+        traffic_graph.add_edge(demand.source, demand.target, weight=float(demand.volume))
+
+    return (topology_graph, traffic_graph)
     
 
 def make_weight1(
