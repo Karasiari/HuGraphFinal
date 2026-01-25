@@ -12,8 +12,7 @@ from .classes_for_algorithm import (
     SpareCapacityGreedyOutput
 )
 
-def convert_greedy_output_for_exp(SpareCapacityGreedyOutput) -> Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]],
-                                                                      int, float]:
+def convert_greedy_output_for_exp(SpareCapacityGreedyOutput) -> Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]:
   remaining_network_dict: Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]] = {}
   
   for edge_key, remaining_network in SpareCapacityGreedyOutput.remaining_network_by_failed_edge.items():
