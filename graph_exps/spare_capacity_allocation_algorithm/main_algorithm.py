@@ -41,7 +41,7 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
 
     reserve_paths_by_failed_edge: Dict[EdgeKey, Dict[DemandID, EdgePath]] = {}
     algorithm_failure_flag: bool = False
-    remaining_network_by_failed_edge: Dict[EdgeKey, Tuple[nx.Graph, nx.MultiDiGraph]] = {}
+    remaining_network_by_failed_edge: Dict[EdgeKey, Tuple[nx.Graph, nx.Graph]] = {}
 
     for failed_edge_idx in failure_edge_indices:
         affected_demands = list(instance.demands_using_edge[failed_edge_idx])
