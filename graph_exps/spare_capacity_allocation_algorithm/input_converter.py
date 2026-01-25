@@ -40,11 +40,11 @@ def _aggregate_edge_capacities(graph: nx.MultiGraph) -> Dict[Tuple[int, int], in
     """
     aggregated_capacity: Dict[Tuple[int, int], int] = {}
 
-    for node_u, node_v, capacity in graph.edges(keys=True):
+    for node_u, node_v, data in graph.edges(data=True):
         edge_key = _canonical_edge_key(int(node_u), int(node_v))
         if edge_key not in aggregated_capacity:
             aggregated_capacity[edge_key] = 0
-        aggregated_capacity[edge_key] += capacity
+        aggregated_capacity[edge_key] += data['capacity']
 
     return aggregated_capacity
 
