@@ -51,8 +51,7 @@ class SpareCapacityGreedyOutput:
     - `remaining_network_by_failed_edge[e]` is the remaining network for the scenario with failed edge e
     - `algorithm_failure_flag` is the flag to identify a failure of our algorithm 
        to allocate all demands in all scenarious
-    - `successfully_rerouted_demands_ratio` is the ratio 
-       sum(volume of demand) of successfully rerouted demands / sum(volume of demand) of all demands
+    - `successfully_rerouted_demands_volume` is the sum(volume of demand) of successfully rerouted demands
     - `additional_volume_by_edge[e]` is the global `add(e)` reservation for edge e.
       Keys are canonical undirected edge keys.
     - `reserve_paths_by_failed_edge[e][demand_id]` is the backup (edge) path used by
@@ -60,7 +59,7 @@ class SpareCapacityGreedyOutput:
     """
     remaining_network_by_failed_edge: Dict[EdgeKey, Tuple[nx.Graph, nx.Graph]]
     algorithm_failure_flag: bool
-    successfully_rerouted_demands_ratio: float
+    successfully_rerouted_demands_volume: float
     additional_volume_by_edge: Dict[EdgeKey, int]
     reserve_paths_by_failed_edge: Dict[EdgeKey, Dict[DemandID, EdgePath]]
 
