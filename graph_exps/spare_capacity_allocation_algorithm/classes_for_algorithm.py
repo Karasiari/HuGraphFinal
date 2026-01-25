@@ -58,7 +58,7 @@ class SpareCapacityGreedyOutput:
     - `reserve_paths_by_failed_edge[e][demand_id]` is the backup (edge) path used by
       `demand_id` when edge `e` fails.
     """
-    remaining_network_by_failed_edge: Dict[EdgeKey, Tuple[nx.Graph, nx.MultiDiGraph]]
+    remaining_network_by_failed_edge: Dict[EdgeKey, Tuple[nx.Graph, nx.Graph]]
     algorithm_failure_flag: bool
     successfully_rerouted_demands_ratio: float
     additional_volume_by_edge: Dict[EdgeKey, int]
