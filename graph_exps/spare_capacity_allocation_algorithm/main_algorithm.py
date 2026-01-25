@@ -19,14 +19,13 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
       A `SpareCapacityGreedyOutput` containing:
         - per-failed-edge remaining networks
         - algorithm failure flag
-        - successfully rerouted demands ratio
+        - successfully rerouted demands volume
         - global per-edge reservations `add(e)`
         - per-failed-edge backup paths for affected demands
     """
     instance = preprocess_instance(input_data)
     epsilon = input_data.epsilon
 
-    total_demands_volume = sum([demand.volume for demand in input_data.demands])
     successfully_rerouted_demands_volume = 0
 
     edge_count = len(instance.edge_key_by_index)
@@ -85,12 +84,10 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         instance.edge_key_by_index[edge_idx]: add_by_edge[edge_idx] for edge_idx in range(edge_count)
     }
 
-    successfully_rerouted_demands_ratio = successfully_rerouted_demands_volume / total_demands_volume
-
     return SpareCapacityGreedyOutput(
         remaining_network_by_failed_edge=remaining_network_by_failed_edge,
         algorithm_failure_flag=algorithm_failure_flag,
-        successfully_rerouted_demands_ratio=successfully_rerouted_demands_ratio,
+        successfully_rerouted_demands_volume=successfully_rerouted_demands_volume,
         additional_volume_by_edge=additional_volume_by_edge,
         reserve_paths_by_failed_edge=reserve_paths_by_failed_edge,
     )
