@@ -15,11 +15,14 @@ from .spare_capacity_allocation_algorithm.output_converter import convert_greedy
 
 # функция для решения перераспределения трафика - в решении наш алгоритм
 
-def allocate_spare_capacity(graph: HuGraphForExps, random_seed: int | None = None):
+def allocate_spare_capacity(graph: HuGraphForExps, random_seed: int | None = None) -> Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]:
     route_result, demands, solved = graph.solve_mcf()
     input_for_algorithm = convert_to_greedy_input(graph.multigraph, demands, route_result, random_seed)
     output_of_algorithm = run_greedy_spare_capacity_allocation(input_for_algorithm)
     allocation_results = convert_greedy_output_for_exp(output_of_algorithm)
+
+    return allocation_results
+                                                                                                
 
 # функция для параллелизованного расчета метрику α для ВСЕХ ребер графа
 
