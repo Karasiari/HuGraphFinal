@@ -22,7 +22,7 @@ def convert_greedy_output_for_exp(SpareCapacityGreedyOutput) -> Tuple[Dict[Tuple
         algorithm_failure_flag = 1
     else:
         algorithm_failure_flag = 0
-      
-     successfully_rerouted_demands_ratio = SpareCapacityGreedyOutput.successfully_rerouted_demands_ratio
-   
-     return (remaining_network_dict, algorithm_failure_flag, successfully_rerouted_demands_ratio)
+    
+    successfully_rerouted_demands_ratio = SpareCapacityGreedyOutput.successfully_rerouted_demands_ratio
+    
+    return (remaining_network_dict, algorithm_failure_flag, successfully_rerouted_demands_ratio)
