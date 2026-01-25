@@ -93,7 +93,7 @@ def _build_demand_inputs(
 
     for demand_id, edge_path_with_keys in route_result.items():
         demand_source, demand_target, demand_capacity = demands[demand_id]
-        edge_path = [OrientedEdge(tuple(node_u, node_v)) for node_u, node_v, _ in edge_path_with_keys]
+        edge_path = [OrientedEdge(tuple((node_u, node_v))) for node_u, node_v, _ in edge_path_with_keys]
 
         demand_inputs.append(DemandInput(
             demand_id=DemandID(demand_id),
