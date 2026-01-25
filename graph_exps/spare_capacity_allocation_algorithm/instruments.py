@@ -157,15 +157,16 @@ def build_remaining_network_for_failed_edge(
     failed_edge_idx: int,
     leftover_by_edge: PositiveTouchedArray,
     affected_demands: Sequence[DemandID]
-) -> Tuple[nx.Graph, nx.MultiDiGraph]:
+) -> Tuple[nx.Graph, nx.Graph]:
     """
     Build an undirected NetworkX graph of a remaining topology network for the failed edge
-    and a directed NetworkX multigraph of a remaining traffic network for the failed edge
+    and an undirected NetworkX graph of a remaining traffic network for the failed edge
     """
     topology_graph = nx.Graph()
-    traffic_graph = nx.MultiDiGraph()
+    traffic_graph = nx.Graph()
     topology_graph.add_nodes_from(instance.graph.nodes())
     traffic_graph.add_nodes_from(instance.graph.nodes())
+    traffic_aggregated: Dict[EdgeKey, float] = {}
     leftover = leftover_by_edge.values
 
     for edge_idx, edge_key in enumerate(instance.edge_key_by_index):
@@ -173,12 +174,18 @@ def build_remaining_network_for_failed_edge(
             edge_capacity = instance.slack_by_edge[edge_idx] + leftover[edge_idx]
             if edge_capacity > 0:
                 topology_graph.add_edge(edge_key[0], edge_key[1], capacity=edge_capacity)
-
+                
     for demand_id in affected_demands:
         demand = instance.demands_by_id[demand_id]
         if demand.volume <= 0:
             continue
-        traffic_graph.add_edge(demand.source, demand.target, weight=float(demand.volume))
+        demand_key = canonical_edge_key(demand.source, demand.target)
+        if traffic_aggregated.get(demand_key, False):
+            traffic_aggregated[demand_key] += float(demand.volume)
+        else:
+            traffic_aggregated[demand_key] = float(demand.volume)
+    for demand_key, demand_volume in traffic_aggregated.items():
+        traffic_graph.add_edge(demand_key[0], demand_key[1], weight=demand_volume)
 
     return (topology_graph, traffic_graph)
     
