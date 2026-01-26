@@ -88,3 +88,4 @@ def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[floa
 
     # проводим тест на перепрокладку на расширенных графах
     allocation_results = allocation_test(expanded_graphs)
+    return allocation_results
