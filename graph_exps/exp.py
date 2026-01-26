@@ -24,7 +24,7 @@ def allocate_spare_capacity(graph: HuGraphForExps, random_seed: int | None = Non
     return allocation_results
                                                                                                 
 
-# функция для параллелизованного расчета метрику α для ВСЕХ ребер графа
+# функция для параллелизованного расчета метрики α для ВСЕХ ребер графа
 
 def compute_alpha_for_all_edges(graph: HuGraphForExps, n_jobs=8) -> List[Tuple[Tuple[int, int], float]]:
     """
@@ -48,38 +48,45 @@ def compute_alpha_for_all_edges(graph: HuGraphForExps, n_jobs=8) -> List[Tuple[T
     edges_with_alphas = [r for r in results_all if r is not None]
     return edges_with_alphas
 
+# функция для расширения сети
+
+def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple[Tuple[int, int], float]], resources_to_add: List[float], allocation_type: str) -> HuGraphForExps:
+    # добавляем новые ресурсы предпочтительно по значению метрики α ребра
+    if allocation_type == "alpha":
+        edges_with_alphas.sort(key=lambda x: x[1], reverse=True)
+        edges_to_expand = [edge for edge, _ in edges_with_alphas[:number_of_new_resources]]
+        source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add))
+        
+    # добавляем новые ресурсы в порядке - сначала СЛУЧАЙНО выбираем ребра для расширения, потом СРЕДИ ВЫБРАННЫХ распределяем предпочтительно по значению метрики α ребра
+    elif allocation_type == "random_alpha":
+        random.shuffle(edges_with_alphas)
+        edges_to_expand = edges_with_alphas[:number_of_new_resources]
+        edges_to_expand.sort(key=lambda x: x[1], reverse=True)
+        edges_to_expand = [edge for edge, _ in edges_to_expand]
+        source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add))
+
+    # добавляем новые ресурсы для СЛУЧАЙНО ВЫБРАННЫХ ребер
+    elif allocation_type == "random":
+        random.shuffle(edges_with_alphas)
+        edges_to_expand = [edge for edge, _ in edges_with_alphas[:number_of_new_resources]]
+        source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add))
+    else:
+        raise ValueError(f"Тип распределения ресурсов {allocation_type} не предусмотрен экспериментом")
+
+    graph_copy_to_expand = graph.copy()
+    expanded_graph = expand_graph(graph_copy_to_expand, source_target_sequence_for_new_resources)
+    return expanded_graph
+    
 # основная функция для эксперимента по расширению для ОДНОГО графа
 
 def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[float], allocation_types: List[str]):
     # рассчитываем метрику α для ребер графа
     edges_with_alphas = compute_alpha_for_all_edges(graph)
     
-    # распределяем новые ресуры согласно типу аллокации
+    # распределяем новые ресурсы согласно типу аллокации и получаем расширенные сети
     number_of_new_resources = len(additional_resources)
     resources_to_add = additional_resources.sort(reverse=True)
-    
+    expanded_graphs = {}
     for allocation_type in allocation_types:
-        # добавляем новые ресурсы предпочтительно по значению метрики α ребра
-        if allocation_type == "alpha":
-            edges_with_alphas.sort(key=lambda x: x[1], reverse=True)
-            edges_to_expand = [edge for edge, _ in edges_with_alphas[:number_of_new_resources]]
-            source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add))
-            #!!!! функция для создания/добавления ресурсов в граф
-        
-        # добавляем новые ресурсы в порядке - сначала СЛУЧАЙНО выбираем ребра для расширения, потом СРЕДИ ВЫБРАННЫХ распределяем предпочтительно по значению метрики α ребра
-        elif allocation_type == "random_alpha":
-            random.shuffle(edges_with_alphas)
-            edges_to_expand = edges_with_alphas[:number_of_new_resources]
-            edges_to_expand.sort(key=lambda x: x[1], reverse=True)
-            edges_to_expand = [edge for edge, _ in edges_to_expand]
-            source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add))
-            #!!!! функция для создания/добавления ресурсов в граф
-
-        # добавляем новые ресурсы для СЛУЧАЙНО ВЫБРАННЫХ ребер
-        elif allocation_type == "random":
-            random.shuffle(edges_with_alphas)
-            edges_to_expand = [edge for edge, _ in edges_with_alphas[:number_of_new_resources]]
-            source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add))
-            #!!!! функция для создания/добавления ресурсов в граф
-        else:
-            raise ValueError(f"Тип распределения ресурсов {allocation_type} не предусмотрен экспериментом")
+        expanded_graph = expand_network_for_type(graph, edges_with_alphas, resources_to_add, allocation_type)
+        expanded_graphs[allocation_type] = expanded_graph
