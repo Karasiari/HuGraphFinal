@@ -1,4 +1,10 @@
+from typing import Dict, Tuple
+
 from .core import HuGraphForExps
+
+from .spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input # импорт функции для преобразования данных под алгоритм перераспределения трафика
+from .spare_capacity_allocation_algorithm.main_algorithm import run_greedy_spare_capacity_allocation # импорт основной функции алгоритма перепрокладки
+from .spare_capacity_allocation_algorithm.output_converter import convert_greedy_output_for_exp # импорт функции для преобразования результата алгоритма перепрокладки под наш эксперимент
 
 # ----------------------------------------------------------------------------------
 # вспомогательные функции для основного экспа - для расчетов, параллелизаций и проч.
@@ -25,3 +31,15 @@ def expand_graph(graph: HuGraphForExps, source_target_sequence_to_add: List[Tupl
     for edge, capacity in source_target_sequence_to_add:
         graph.change_multiedge(edge[0], edge[1], type='insert', capacity=capacity)
     return graph
+
+
+# функция для решения перераспределения трафика - в решении наш алгоритм
+
+def allocate_spare_capacity(graph_version: Tuple[str, HuGraphForExps], random_seed: int | None = None) -> Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]:
+    allocation_type, graph = graph_version
+    route_result, demands, solved = graph.solve_mcf()
+    input_for_algorithm = convert_to_greedy_input(graph.multigraph, demands, route_result, random_seed)
+    output_of_algorithm = run_greedy_spare_capacity_allocation(input_for_algorithm)
+    allocation_results = convert_greedy_output_for_exp(output_of_algorithm)
+
+    return (allocation_type, allocation_results)
