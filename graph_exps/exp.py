@@ -12,16 +12,6 @@ from .instruments_for_exps import * # импорт вспомогательны�
 from .spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input # импорт функции для преобразования данных под алгоритм перераспределения трафика
 from .spare_capacity_allocation_algorithm.main_algorithm import run_greedy_spare_capacity_allocation # импорт основной функции алгоритма перепрокладки
 from .spare_capacity_allocation_algorithm.output_converter import convert_greedy_output_for_exp # импорт функции для преобразования результата алгоритма перепрокладки под наш эксперимент
-
-# функция для решения перераспределения трафика - в решении наш алгоритм
-
-def allocate_spare_capacity(graph: HuGraphForExps, random_seed: int | None = None) -> Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]:
-    route_result, demands, solved = graph.solve_mcf()
-    input_for_algorithm = convert_to_greedy_input(graph.multigraph, demands, route_result, random_seed)
-    output_of_algorithm = run_greedy_spare_capacity_allocation(input_for_algorithm)
-    allocation_results = convert_greedy_output_for_exp(output_of_algorithm)
-
-    return allocation_results
                                                                                                 
 
 # функция для параллелизованного расчета метрики α для ВСЕХ ребер графа
@@ -76,6 +66,14 @@ def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple
     graph_copy_to_expand = graph.copy()
     expanded_graph = expand_graph(graph_copy_to_expand, source_target_sequence_for_new_resources)
     return expanded_graph
+
+# функция для теста на перепрокладку при падении ребер
+def allocation_test(graphs: Dict[str, HuGraphForExpss], n_jobs=8):
+    results_all = Parallel(n_jobs=n_jobs)(
+        delayed(allocate_spare_capacity)(graph)
+        for graph in graphs.items()
+    )
+    return results_all
     
 # основная функция для эксперимента по расширению для ОДНОГО графа
 
@@ -90,3 +88,6 @@ def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[floa
     for allocation_type in allocation_types:
         expanded_graph = expand_network_for_type(graph, edges_with_alphas, resources_to_add, allocation_type)
         expanded_graphs[allocation_type] = expanded_graph
+
+    # проводим тест на перепрокладку на расширенных графах
+    allocation_results = allocation_test(expanded_graphs)
