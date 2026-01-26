@@ -50,6 +50,10 @@ class HuGraphForExps:
         self.mincut: Optional[np.ndarray] = None
         self.cut_alpha: Optional[np.ndarray] = None
 
+    def copy(self):
+        """Глубокая копия"""
+        return copy.deepcopy(self)
+
     # ----------------
     # расчет метрики α
     # ----------------
