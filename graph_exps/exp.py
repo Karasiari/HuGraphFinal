@@ -69,12 +69,9 @@ def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple
 def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=8):
     graph_sequence = []
     for allocation_type, graph in graphs.items():
-      try:
-        graph_state = pickle.dumps(graph)
-      except Exception as e:
-        raise ValueError("Graph is not pickle-serializable. Ensure GraphMCFexps supports pickle.") from e
       for try_number in range(tries_for_allocation):
-        graph_sequence.append((allocation_type, graph_state))
+        graph_copy = graph.copy()
+        graph_sequence.append((allocation_type, graph_copy))
 
     results_all = Parallel(n_jobs=n_jobs)(
         delayed(allocate_spare_capacity)(graph)
