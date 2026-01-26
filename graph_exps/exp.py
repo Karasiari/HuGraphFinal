@@ -38,6 +38,7 @@ def compute_alpha_for_all_edges(graph: HuGraphForExps, n_jobs=8) -> List[Tuple[T
 # функция для расширения сети
 
 def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple[Tuple[int, int], float]], resources_to_add: List[float], allocation_type: str) -> HuGraphForExps:
+    number_of_new_resources = len(resources_to_add)
     # добавляем новые ресурсы предпочтительно по значению метрики α ребра
     if allocation_type == "alpha":
         edges_with_alphas.sort(key=lambda x: x[1], reverse=True)
@@ -79,7 +80,6 @@ def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[floa
     edges_with_alphas = compute_alpha_for_all_edges(graph)
     
     # распределяем новые ресурсы согласно типу аллокации и получаем расширенные сети
-    number_of_new_resources = len(additional_resources)
     resources_to_add = additional_resources.sort(reverse=True)
     expanded_graphs = {}
     for allocation_type in allocation_types:
