@@ -19,3 +19,9 @@ def compute_alpha_for_edge(graph_state, source, target):
     alpha = graph.calculate_alpha()
     # graph.restore_graph() не нужен, т.к. граф временный
     return ((source, target), alpha)
+    
+
+def expand_graph(graph: HuGraphForExps, source_target_sequence_to_add: List[Tuple[Tuple[int, int], float]]) -> HuGraphForExps:
+    for edge, capacity in source_target_sequence_to_add:
+        graph.change_multiedge(edge[0], edge[1], type='insert', capacity=capacity)
+    return graph
