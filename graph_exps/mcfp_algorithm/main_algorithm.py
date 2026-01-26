@@ -70,4 +70,4 @@ def solve_max_concurrent_flow_problem(graph: nx.DiGraph, demands_laplacian: np.n
 
   gamma = gamma if gamma is not None else max_gamma
   
-  return gamma
+  return float(gamma)
