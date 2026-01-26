@@ -65,7 +65,7 @@ def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple
     return expanded_graph
 
 # функция для теста на перепрокладку при падении ребер
-def allocation_test(graphs: Dict[str, HuGraphForExpss], n_jobs=8):
+def allocation_test(graphs: Dict[str, HuGraphForExps], n_jobs=8):
     results_all = Parallel(n_jobs=n_jobs)(
         delayed(allocate_spare_capacity)(graph)
         for graph in graphs.items()
