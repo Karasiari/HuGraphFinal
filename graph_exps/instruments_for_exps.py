@@ -1,5 +1,7 @@
 from typing import Dict, Tuple, List
 
+import networkx as nx
+
 from .core import HuGraphForExps
 
 from .spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input # импорт функции для преобразования данных под алгоритм перераспределения трафика
