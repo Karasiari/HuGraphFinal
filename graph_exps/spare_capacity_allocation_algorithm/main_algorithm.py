@@ -52,33 +52,32 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         remaining_network_for_edge = build_remaining_network_for_failed_edge(instance, failed_edge_idx, leftover, affected_demands)
         remaining_network_by_failed_edge[instance.edge_key_by_index[failed_edge_idx]] = remaining_network_for_edge
 
-        scenario = FailureScenarioState(
-            failed_edge_index=failed_edge_idx,
-            leftover_by_edge=leftover,
-            routed_by_edge=routed,
-            add_by_edge=add_by_edge,
-            slack_by_edge=instance.slack_by_edge,
-        )
+        if not algorithm_failure_flag:
+            scenario = FailureScenarioState(
+                failed_edge_index=failed_edge_idx,
+                leftover_by_edge=leftover,
+                routed_by_edge=routed,
+                add_by_edge=add_by_edge,
+                slack_by_edge=instance.slack_by_edge,
+            )
 
-        demand_to_backup_path: Dict[DemandID, EdgePath] = {}
-        for demand_id in affected_demands:
-            demand = instance.demands_by_id[demand_id]
-            try:
-                backup_nodes = find_backup_path_nodes(instance, scenario, demand)
-            except ValueError:
-                algorithm_failure_flag = True
-                break
-            try:
-                apply_backup_routing(instance, scenario, demand, backup_nodes)
-            except ValueError:
-                algorithm_failure_flag = True
-                break
-            demand_to_backup_path[demand_id] = nodes_to_oriented_edge_path(backup_nodes)
-            successfully_rerouted_demands_volume += demand.volume
+            demand_to_backup_path: Dict[DemandID, EdgePath] = {}
+            for demand_id in affected_demands:
+                demand = instance.demands_by_id[demand_id]
+                try:
+                    backup_nodes = find_backup_path_nodes(instance, scenario, demand)
+                except ValueError:
+                    algorithm_failure_flag = True
+                    break
+                try:
+                    apply_backup_routing(instance, scenario, demand, backup_nodes)
+                except ValueError:
+                    algorithm_failure_flag = True
+                    break
+                demand_to_backup_path[demand_id] = nodes_to_oriented_edge_path(backup_nodes)
+                successfully_rerouted_demands_volume += demand.volume
 
-        reserve_paths_by_failed_edge[instance.edge_key_by_index[failed_edge_idx]] = demand_to_backup_path
-        if algorithm_failure_flag:
-            break
+            reserve_paths_by_failed_edge[instance.edge_key_by_index[failed_edge_idx]] = demand_to_backup_path
 
     additional_volume_by_edge = {
         instance.edge_key_by_index[edge_idx]: add_by_edge[edge_idx] for edge_idx in range(edge_count)
