@@ -84,11 +84,11 @@ def allocation_test_not_par(graphs: Dict[str, HuGraphForExps], tries_for_allocat
   for allocation_type, graph in graphs.items():
     for try_number in range(tries_for_allocation):
       graph_copy = graph.copy()
-      graph_sequence.append((allocation_type, graph_copy))
+      graph_sequence.append((graph_copy, allocation_type))
 
   results_all = []
-  for graph in graph_sequence:
-    result = allocate_spare_capacity(graph)
+  for graph, allocation_type in graph_sequence:
+    result = allocate_spare_capacity(graph, allocation_type)
     results_all.append(result)
 
   return results_all
