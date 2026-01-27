@@ -78,10 +78,25 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
         for graph in tqdm(graph_sequence, desc="Processing allocation")
     )
     return results_all
+
+def allocation_test_not_par(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=8):
+  graph_sequence = []
+  for allocation_type, graph in graphs.items():
+    for try_number in range(tries_for_allocation):
+      graph_copy = graph.copy()
+      graph_sequence.append((allocation_type, graph_copy))
+
+  results_all = []
+  for graph in graph_sequence:
+    result = allocate_spare_capacity(graph)
+    results_all.append(result)
+
+  return results_all
+    
     
 # основная функция для эксперимента по расширению для ОДНОГО графа
 
-def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[float], allocation_types: List[str], tries_for_allocation: int):
+def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[float], allocation_types: List[str], tries_for_allocation: int, flag):
     # рассчитываем метрику α для ребер графа
     edges_with_alphas = compute_alpha_for_all_edges(graph)
     
@@ -93,5 +108,8 @@ def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[floa
         expanded_graphs[allocation_type] = expanded_graph
 
     # проводим тест на перепрокладку на расширенных графах
-    allocation_results = allocation_test(expanded_graphs, tries_for_allocation)
+    if flag:
+      allocation_results = allocation_test(expanded_graphs, tries_for_allocation)
+    else:
+      allocation_results = allocation_test_not_par(expanded_graphs, tries_for_allocation)
     return allocation_results
