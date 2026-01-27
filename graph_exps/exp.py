@@ -66,20 +66,23 @@ def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple
     return expanded_graph
 
 # функция для теста на перепрокладку при падении ребер
-def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1):
+def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1) -> List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]]:
     tasks = []
     for allocation_type, graph in graphs.items():
       for try_number in range(tries_for_allocation):
         graph_copy = graph.copy()
         tasks.append((graph_copy, allocation_type))
 
-    results_all_raw = Parallel(n_jobs=n_jobs)(
+    results_all = Parallel(n_jobs=n_jobs)(
         delayed(allocate_spare_capacity)(graph, allocation_type)
         for graph, allocation_type in tqdm(tasks, desc="Processing allocation", total=len(tasks))
     )
+    return result_all
 
+# функция для получения итоговых результатов эксперимента по графу в нужном формате
+def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]]):
     result_dict = {}
-    for allocation_type, result_raw in results_all_raw:
+    for allocation_type, result_raw in allocation_results_raw:
       result = {'allocation solved': result_raw[1], 'rerouted volume': result_raw[2]}
       if result_dict.get(allocation_type, False):
         result['gamma for remaining network'] = result_dict.get(allocation_type)['gamma for remaining network']
@@ -92,6 +95,7 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
         result['gamma for remaining network'] = {edge: remaining_network_gamma for edge, remainin_network_gamma in remaining_networks_gammas}
       result_dict[allocation_type] = result.copy()
     return result_dict
+  
     
 # основная функция для эксперимента по расширению для ОДНОГО графа
 
@@ -107,5 +111,8 @@ def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[floa
         expanded_graphs[allocation_type] = expanded_graph
 
     # проводим тест на перепрокладку на расширенных графах
-    allocation_results = allocation_test(expanded_graphs, tries_for_allocation)
+    allocation_results_raw = allocation_test(expanded_graphs, tries_for_allocation)
+
+    # получаем нужный формат output
+    allocation_results = get_right_output(allocation_results_raw)
     return allocation_results
