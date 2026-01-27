@@ -79,6 +79,20 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
     )
     return results_all
 
+def alloc_t(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=8):
+    for allocation_type, graph in graphs.items():
+      try:
+        graph_state = pickle.dumps(graph)
+      except Exception as e:
+        raise ValueError("Graph is not pickle-serializable. Ensure GraphMCFexps supports pickle.") from e
+
+    try_sequence = [i+1 for i in range(tries_for_allocation)]
+    results_all = Parallel(n_jobs=n_jobs)(
+        delayed(allocate_spare_capacity_i)(graph_state)
+        for try_number in tqdm(graph_sequence, desc="Processing allocation")
+    )
+    return results_all
+
 def allocation_test_not_par(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=8):
   graph_sequence = []
   for allocation_type, graph in graphs.items():
@@ -109,7 +123,7 @@ def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[floa
 
     # проводим тест на перепрокладку на расширенных графах
     if flag:
-      allocation_results = allocation_test(expanded_graphs, tries_for_allocation)
+      allocation_results = allocation_t(expanded_graphs, tries_for_allocation)
     else:
       allocation_results = allocation_test_not_par(expanded_graphs, tries_for_allocation)
     return allocation_results
