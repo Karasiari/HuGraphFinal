@@ -1,6 +1,7 @@
 import random
 import copy
 import networkx as nx
+import pandas as pd
 from typing import Optional, Dict, Any, Tuple, List
 
 import pickle
@@ -80,7 +81,7 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
     return results_all
 
 # функция для получения итоговых результатов эксперимента по графу в нужном формате
-def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]], n_jobs=8):
+def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]], n_jobs=8) -> pd.DataFrame:
     result_dict = {}
     for allocation_type, result_raw in allocation_results_raw:
       result = {'allocation solved': result_raw[1], 'rerouted volume': result_raw[2]}
@@ -94,12 +95,13 @@ def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[in
         )
         result['gamma for remaining network'] = {edge: remaining_network_gamma for edge, remainin_network_gamma in remaining_networks_gammas}
       result_dict[allocation_type] = result.copy()
-    return result_dict
+    result_df = pd.DataFrame(result_dict).T
+    return result_df
   
     
 # основная функция для эксперимента по расширению для ОДНОГО графа
 
-def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[float], allocation_types: List[str], tries_for_allocation: int):
+def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[float], allocation_types: List[str], tries_for_allocation: int) -> pd.DataFrame:
     # рассчитываем метрику α для ребер графа
     edges_with_alphas = compute_alpha_for_all_edges(graph)
     
