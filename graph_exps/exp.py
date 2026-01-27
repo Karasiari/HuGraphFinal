@@ -73,11 +73,15 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
         graph_copy = graph.copy()
         tasks.append((graph_copy, allocation_type))
 
-    results_all = Parallel(n_jobs=n_jobs)(
+    results_all_raw = Parallel(n_jobs=n_jobs)(
         delayed(allocate_spare_capacity)(graph, allocation_type)
         for graph, allocation_type in tqdm(tasks, desc="Processing allocation", total=len(tasks))
     )
-    return results_all 
+    results_all = Parallel(n_jobs=n_jobs)(
+        delayed(convert_to_dataframe)(allocation_type, result_raw)
+        for allocation_type, result_raw in tqdm(results_all_raw, desc="Processing output", total=len(results_all_raw))
+    )
+    return results_all
     
 # основная функция для эксперимента по расширению для ОДНОГО графа
 
