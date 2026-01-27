@@ -123,7 +123,7 @@ def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[floa
 
     # проводим тест на перепрокладку на расширенных графах
     if flag:
-      allocation_results = allocation_t(expanded_graphs, tries_for_allocation)
+      allocation_results = alloc_t(expanded_graphs, tries_for_allocation)
     else:
       allocation_results = allocation_test_not_par(expanded_graphs, tries_for_allocation)
     return allocation_results
