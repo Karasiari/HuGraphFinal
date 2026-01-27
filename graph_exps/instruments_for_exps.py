@@ -44,3 +44,13 @@ def allocate_spare_capacity(graph: HuGraphForExps, allocation_type: str, random_
     allocation_results = convert_greedy_output_for_exp(output_of_algorithm)
 
     return (allocation_type, allocation_results)
+
+
+# функция для решения max concurrent flow на остаточной сети (gamma) для параллельного расчета в рамках основного эксперимента
+
+def get_gamma_for_exp(edge: Tuple[int, int], graph: nx.Graph, traffic_graph: nx.Graph) -> Tuple[Tuple[int, int], float]:
+    graph_for_solving = HuGraphForExp(graph, traffic_graph)
+    gamma = graph_for_solving.solve_mcfp()
+
+    return edge, gamma
+    
