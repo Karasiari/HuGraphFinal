@@ -77,7 +77,7 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
         delayed(allocate_spare_capacity)(graph, allocation_type)
         for graph, allocation_type in tqdm(tasks, desc="Processing allocation", total=len(tasks))
     )
-    return result_all
+    return results_all
 
 # функция для получения итоговых результатов эксперимента по графу в нужном формате
 def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]]):
