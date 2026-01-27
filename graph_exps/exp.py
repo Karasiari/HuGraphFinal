@@ -80,7 +80,7 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
 
     result_dict = {}
     for allocation_type, result_raw in results_all_raw:
-      result = {'allocation solved': result_raw[1], 'rerouted volume': result_raw: [2]}
+      result = {'allocation solved': result_raw[1], 'rerouted volume': result_raw[2]}
       if result_dict.get(allocation_type, False):
         result['gamma for remaining network'] = result_dict.get(allocation_type)['gamma for remaining network']
       else:
