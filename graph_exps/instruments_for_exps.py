@@ -45,3 +45,13 @@ def allocate_spare_capacity(graph_version: Tuple[str, HuGraphForExps], random_se
     allocation_results = convert_greedy_output_for_exp(output_of_algorithm)
 
     return (allocation_type, allocation_results)
+
+def allocate_spare_capacity_i(graph_state, random_seed: int | None = None) -> Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]:
+    import pickle
+    graph = pickle.loads(graph_state)
+    route_result, demands, solved = graph.solve_mcf()
+    input_for_algorithm = convert_to_greedy_input(graph.multigraph, demands, route_result, random_seed)
+    output_of_algorithm = run_greedy_spare_capacity_allocation(input_for_algorithm)
+    allocation_results = convert_greedy_output_for_exp(output_of_algorithm)
+
+    return ('alpha', allocation_results)
