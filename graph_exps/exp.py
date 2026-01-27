@@ -89,7 +89,7 @@ def alloc_t(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs
     try_sequence = [i+1 for i in range(tries_for_allocation)]
     results_all = Parallel(n_jobs=n_jobs)(
         delayed(allocate_spare_capacity_i)(graph_state)
-        for try_number in tqdm(graph_sequence, desc="Processing allocation")
+        for try_number in tqdm(try_sequence, desc="Processing allocation")
     )
     return results_all
 
