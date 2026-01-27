@@ -84,10 +84,10 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
       if result_dict.get(allocation_type, False):
         result['gamma for remaining network'] = result_dict.get(allocation_type)['gamma for remaining network']
       else:
-        remaining_network_by_failed_edge = [(edge, remaining_network[0], remaining_network[1]) for edge, remaining_network in result_raw[0].items()]
+        remaining_network_by_failed_edge = [(edge, HuGraphForExps(remaining_network[0], remaining_network[1])) for edge, remaining_network in result_raw[0].items()]
         remaining_networks_gammas = Parallel(n_jobs=n_jobs)(
-            delayed(get_gamma_for_exp)(edge, graph, traffic_graph)
-            for graph, traffic_graph, edge in remaining_network_by_failed_edge
+            delayed(solve_mcfp_wrapper)(edge, network)
+            for edge, network in remaining_network_by_failed_edge
         )
         result['gamma for remaining network'] = {edge: remaining_network_gamma for edge, remainin_network_gamma in remaining_networks_gammas}
       result_dict[allocation_type] = result.copy()
