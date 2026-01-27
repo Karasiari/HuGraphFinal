@@ -66,34 +66,20 @@ def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple
     return expanded_graph
 
 # функция для теста на перепрокладку при падении ребер
-def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=8):
-    graph_sequence = []
+def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1):
+    tasks = []
     for allocation_type, graph in graphs.items():
       for try_number in range(tries_for_allocation):
         graph_copy = graph.copy()
-        graph_sequence.append((allocation_type, graph_copy))
+        tasks.append((graph_copy, allocation_type))
 
     results_all = Parallel(n_jobs=n_jobs)(
-        delayed(allocate_spare_capacity)(graph)
-        for graph in tqdm(graph_sequence, desc="Processing allocation")
+        delayed(allocate_spare_capacity)(graph, allocation_type)
+        for graph, allocation_type in tqdm(tasks, desc="Processing allocation", total=len(tasks))
     )
     return results_all
 
-def alloc_t(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=8):
-    for allocation_type, graph in graphs.items():
-      try:
-        graph_state = pickle.dumps(graph)
-      except Exception as e:
-        raise ValueError("Graph is not pickle-serializable. Ensure GraphMCFexps supports pickle.") from e
-
-    try_sequence = [i+1 for i in range(tries_for_allocation)]
-    results_all = Parallel(n_jobs=n_jobs)(
-        delayed(allocate_spare_capacity_i)(graph_state)
-        for try_number in tqdm(try_sequence, desc="Processing allocation")
-    )
-    return results_all
-
-def allocation_test_not_par(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=8):
+def allocation_test_not_par(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int):
   graph_sequence = []
   for allocation_type, graph in graphs.items():
     for try_number in range(tries_for_allocation):
@@ -123,7 +109,7 @@ def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[floa
 
     # проводим тест на перепрокладку на расширенных графах
     if flag:
-      allocation_results = alloc_t(expanded_graphs, tries_for_allocation)
+      allocation_results = allocation_test(expanded_graphs, tries_for_allocation)
     else:
       allocation_results = allocation_test_not_par(expanded_graphs, tries_for_allocation)
     return allocation_results
