@@ -66,7 +66,7 @@ def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple
     return expanded_graph
 
 # функция для теста на перепрокладку при падении ребер
-def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1) -> List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]]:
+def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=8) -> List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]]:
     tasks = []
     for allocation_type, graph in graphs.items():
       for try_number in range(tries_for_allocation):
@@ -80,7 +80,7 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
     return results_all
 
 # функция для получения итоговых результатов эксперимента по графу в нужном формате
-def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]]):
+def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]], n_jobs=8):
     result_dict = {}
     for allocation_type, result_raw in allocation_results_raw:
       result = {'allocation solved': result_raw[1], 'rerouted volume': result_raw[2]}
