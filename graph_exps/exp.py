@@ -77,11 +77,21 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
         delayed(allocate_spare_capacity)(graph, allocation_type)
         for graph, allocation_type in tqdm(tasks, desc="Processing allocation", total=len(tasks))
     )
-    results_all = Parallel(n_jobs=n_jobs)(
-        delayed(convert_to_dataframe)(allocation_type, result_raw)
-        for allocation_type, result_raw in tqdm(results_all_raw, desc="Processing output", total=len(results_all_raw))
-    )
-    return results_all
+
+    result_dict = {}
+    for allocation_type, result_raw in results_all_raw:
+      result = {'allocation solved': result_raw[1], 'rerouted volume': result_raw: [2]}
+      if result_dict.get(allocation_type, False):
+        result['gamma for remaining network'] = result_dict.get(allocation_type)['gamma for remaining network']
+      else:
+        remaining_network_by_failed_edge = [edge, remaining_network[0], remaining_networks[1] for edge, remaining_network in result_raw[0].items()]
+        remaining_networks_gammas = Parallel(n_jobs=n_jobs)(
+            delayed(get_gamma_for_exp)(edge, graph, traffic_graph)
+            for graph, traffic_graph, edge in remaining_network_by_failed_edge
+        )
+        result['gamma for remaining network'] = {edge: remaining_network_gamma for edge, remainin_network_gamma in remaining_networks_gammas}
+      result_dict[allocation_type] = result.copy()
+    return result_dict
     
 # основная функция для эксперимента по расширению для ОДНОГО графа
 
