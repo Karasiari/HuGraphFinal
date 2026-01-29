@@ -116,5 +116,5 @@ def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[floa
     allocation_results_raw = allocation_test(expanded_graphs, tries_for_allocation)
 
     # получаем нужный формат output
-    allocation_results = get_right_output(allocation_results_raw)
-    return allocation_results
+    #allocation_results = get_right_output(allocation_results_raw)
+    return allocation_results_raw
