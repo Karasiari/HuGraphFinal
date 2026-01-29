@@ -90,7 +90,7 @@ def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[in
         remaining_networks_gammas = allocation_seen.get(allocation_type)['gamma for remaining network']
         for edge, remaining_network_gamma in remaining_networks_gammas:
           result[f'gamma for failed {edge}'] = remaining_network_gamma
-        allocation_seen['seen'] += 1
+        allocation_seen[allocation_type]['seen'] += 1
       else:
         remaining_network_by_failed_edge = [(edge, HuGraphForExps(remaining_network[0], remaining_network[1])) for edge, remaining_network in result_raw[0].items()]
         remaining_networks_gammas = Parallel(n_jobs=n_jobs)(
