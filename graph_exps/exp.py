@@ -88,7 +88,7 @@ def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[in
       result = {'allocation solved': result_raw[1], 'rerouted volume': result_raw[2]}
       if allocation_seen.get(allocation_type, False):
         remaining_networks_gammas = allocation_seen.get(allocation_type)['gamma for remaining network']
-        for edge, remaining_network_gamma in remaining_networks_gammas:
+        for edge, remaining_network_gamma in remaining_networks_gammas.items():
           result[f'gamma for failed {edge}'] = remaining_network_gamma
         allocation_seen[allocation_type]['seen'] += 1
       else:
