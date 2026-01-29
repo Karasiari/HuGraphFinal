@@ -93,7 +93,7 @@ def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[in
             delayed(solve_mcfp_wrapper)(edge, network)
             for edge, network in tqdm(remaining_network_by_failed_edge, desc=f"Solving remaining network MCFPs for {allocation_type}", total=len(remaining_network_by_failed_edge))
         )
-        result['gamma for remaining network'] = {edge: remaining_network_gamma for edge, remainin_network_gamma in remaining_networks_gammas}
+        result['gamma for remaining network'] = {edge: remaining_network_gamma for edge, remaining_network_gamma in remaining_networks_gammas}
       result_dict[allocation_type] = result.copy()
     result_df = pd.DataFrame(result_dict).T
     return result_df
