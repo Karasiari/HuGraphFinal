@@ -74,12 +74,12 @@ def solve_max_concurrent_flow_problem(graph: nx.DiGraph, demands_laplacian: np.n
       elif max_gamma is None and gamma is not None:
           max_gamma = gamma.value
       current_try += 1
-      if break_flag:
-        if current_try > 5:
-          break
       if prob.status != "optimal":
           gamma = None
       gamma = gamma.value if gamma is not None else None
+      if break_flag:
+        if current_try > 5:
+          break
 
   gamma = gamma if gamma is not None else max_gamma
   gamma = float(gamma) if gamma is not None else None
