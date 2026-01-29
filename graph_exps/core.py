@@ -156,9 +156,10 @@ class HuGraphForExps:
     # --------------
     # MCFP -> gamma
     #---------------
-    def solve_mcfp(self, solver_flag: bool = False) -> float:
+    def solve_mcfp(self, break_flag: bool = True, solver_flag: bool = False) -> float | None:
         """
         Решение задачи максимального пропускного потока на графе self.graph + self.demands_graph с использованием CVXPY.
+        break_flag: прекращаем ли решать после max_for_tries (=5) попыток с получением None в качестве gamma
         solver_flag: решаем ли всегда с помощью солвера CLARABEL.
         return: gamma
         """
@@ -168,7 +169,7 @@ class HuGraphForExps:
         demands_laplacian = self.demands_laplacian.copy()
 
         # получаем решение
-        gamma = solve_max_concurrent_flow_problem(graph, demands_laplacian, solver_flag)
+        gamma = solve_max_concurrent_flow_problem(graph, demands_laplacian, break_flag, solver_flag)
         self.gamma = gamma
         
         return gamma
