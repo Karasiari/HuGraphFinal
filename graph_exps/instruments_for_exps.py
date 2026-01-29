@@ -48,6 +48,6 @@ def allocate_spare_capacity(graph: HuGraphForExps, allocation_type: str, random_
 
 # функция для решения max concurrent flow на остаточной сети (gamma) для параллельного расчета в рамках основного эксперимента
 
-def solve_mcfp_wrapper(edge: Tuple[int, int], graph: HuGraphForExps) -> Tuple[Tuple[int, int], float]:
+def solve_mcfp_wrapper(edge: Tuple[int, int], graph: HuGraphForExps) -> Tuple[Tuple[int, int], float | None]:
     return edge, graph.solve_mcfp()
     
