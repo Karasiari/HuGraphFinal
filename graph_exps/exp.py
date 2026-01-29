@@ -101,7 +101,7 @@ def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[in
           result[f'gamma for failed {edge}'] = remaining_network_gamma
         allocation_seen = {allocation_type: {'seen': 1}}
         allocation_seen[allocation_type]['gamma for remaining network'] = {edge: remaining_network_gamma for edge, remaining_network_gamma in remaining_networks_gammas}
-        result_dict[(allocation_type, allocation_seen[allocation_type]['seen'])] = result.copy()
+      result_dict[(allocation_type, allocation_seen[allocation_type]['seen'])] = result.copy()
     result_df = pd.DataFrame(result_dict).T
     return result_df
   
