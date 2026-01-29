@@ -169,7 +169,7 @@ class HuGraphForExps:
         demands_laplacian = self.demands_laplacian.copy()
 
         # получаем решение
-        gamma = solve_max_concurrent_flow_problem(graph, demands_laplacian, break_flag, solver_flag)
+        gamma = solve_max_concurrent_flow_problem(graph, demands_laplacian, solver_flag, break_flag)
         self.gamma = gamma
         
         return gamma
