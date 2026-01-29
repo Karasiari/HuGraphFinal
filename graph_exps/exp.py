@@ -83,19 +83,26 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
 # функция для получения итоговых результатов эксперимента по графу в нужном формате
 def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]], n_jobs=-1) -> pd.DataFrame:
     result_dict = {}
+    allocation_seen = {}
     for allocation_type, result_raw in allocation_results_raw:
       result = {'allocation solved': result_raw[1], 'rerouted volume': result_raw[2]}
-      if result_dict.get(allocation_type, False):
-        result['gamma for remaining network'] = result_dict.get(allocation_type)['gamma for remaining network']
+      if allocation_seen.get(allocation_type, False):
+        remaining_networks_gammas = allocation_seen.get(allocation_type)['gamma for remaining network']
+        for edge, remaining_network_gamma in remaining_networks_gammas:
+          result[f'gamma for failed {edge}'] = remaining_network_gamma
+        allocation_seen['seen'] += 1
       else:
         remaining_network_by_failed_edge = [(edge, HuGraphForExps(remaining_network[0], remaining_network[1])) for edge, remaining_network in result_raw[0].items()]
         remaining_networks_gammas = Parallel(n_jobs=n_jobs)(
             delayed(solve_mcfp_wrapper)(edge, network)
             for edge, network in tqdm(remaining_network_by_failed_edge, desc=f"Solving remaining network MCFPs for {allocation_type}", total=len(remaining_network_by_failed_edge))
         )
-        result['gamma for remaining network'] = {edge: remaining_network_gamma for edge, remaining_network_gamma in remaining_networks_gammas}
-      result_dict[allocation_type] = result.copy()
-    result_df = pd.DataFrame(result_dict).T
+        for edge, remaining_network_gamma in remaining_networks_gammas:
+          result[f'gamma for failed {edge}'] = remaining_network_gamma
+        allocation_seen = {allocation_type: {'seen': 1}}
+        allocation_seen[allocation_type]['gamma for remaining network'] = {edge: remaining_network_gamma for edge, remaining_network_gamma in remaining_networks_gammas}
+        result_dict[(allocation_type, allocation_seen[allocation_type]['seen'])] = result.copy()
+    result_df = pd.DataFrame(result_dict_to_df).T
     return result_df
   
     
