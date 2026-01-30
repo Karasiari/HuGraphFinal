@@ -185,7 +185,7 @@ class HuGraphForExps:
         index, unsatisfied_subset = 0, set()
         for source, sink, key, data in self.demands_multidigraph.edges(keys=True, data=True):
             capacity = data.get("weight", 0.0)
-            demands.append((source, sink, capacity))
+            demands.append((source, sink, int(capacity)))
             unsatisfied_subset.add(index)
             index += 1
         G = nx.MultiDiGraph(self.multigraph)
