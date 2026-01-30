@@ -4,7 +4,7 @@ import networkx as nx
 
 from .core import HuGraphForExps
 
-from .spare_capacity_allocation_alforithm.classes_for_algorithm import SpareCapacityGreedyInput
+from .spare_capacity_allocation_alforithm.classes_for_algorithm import SpareCapacityGreedyInput # импорт класса под нужный input в алгоритм перепрокладки
 from .spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input # импорт функции для преобразования данных под алгоритм перераспределения трафика
 from .spare_capacity_allocation_algorithm.main_algorithm import run_greedy_spare_capacity_allocation # импорт основной функции алгоритма перепрокладки
 from .spare_capacity_allocation_algorithm.output_converter import convert_greedy_output_for_exp # импорт функции для преобразования результата алгоритма перепрокладки под наш эксперимент
