@@ -67,18 +67,20 @@ def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple
     return expanded_graph
 
 # функция для теста на перепрокладку при падении ребер
-def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1) -> List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]]:
+def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1) -> Tuple[Tuple[str, int, float], Dict[str, Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]]]]:
+    remaining_networks: Dict[str, Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]]] = {}
     tasks = []
     for allocation_type, graph in graphs.items():
       for try_number in range(tries_for_allocation):
         graph_copy = graph.copy()
         tasks.append((graph_copy, allocation_type))
+      remaining_networks[allocation_type] = get_remaining_networks(graph)
 
-    results_all = Parallel(n_jobs=n_jobs)(
+    algorithm_results = Parallel(n_jobs=n_jobs)(
         delayed(allocate_spare_capacity)(graph, allocation_type)
         for graph, allocation_type in tqdm(tasks, desc="Processing allocation", total=len(tasks))
     )
-    return results_all
+    return algorithm_results, remaining_networks
 
 # функция для получения итоговых результатов эксперимента по графу в нужном формате
 def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]], n_jobs=-1) -> pd.DataFrame:
