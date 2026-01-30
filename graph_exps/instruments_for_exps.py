@@ -3,6 +3,7 @@ from typing import Dict, Tuple, List
 import networkx as nx
 
 from .core import HuGraphForExps
+from .mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
 
 from .spare_capacity_allocation_alforithm.classes_for_algorithm import SpareCapacityGreedyInput # импорт класса под нужный input в алгоритм перепрокладки
 from .spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input # импорт функции для преобразования данных под алгоритм перераспределения трафика
@@ -112,6 +113,10 @@ def allocate_spare_capacity(input_for_algorithm: SpareCapacityGreedyInput, alloc
 
 # функция для решения max concurrent flow на остаточной сети (gamma) для параллельного расчета в рамках основного эксперимента
 
-def solve_mcfp_wrapper(edge: Tuple[int, int], graph: HuGraphForExps) -> Tuple[Tuple[int, int], float | None]:
-    return edge, graph.solve_mcfp()
+def solve_mcfp_wrapper(edge: Tuple[int, int], network: Tuple[nx.DiGraph, nx.MultiDiGraph]) -> Tuple[Tuple[int, int], float | None]:
+    graph, demands_graph = network
+    Graph = HuGraphForExps(graph, demands_graph)
+    demands_laplacian = Graph.demands_laplacian
+    gamma = solve_max_concurrent_flow_problem(graph, demands_laplacian, solver_flag=False, break_flag=True)
+    return edge, gamma
     
