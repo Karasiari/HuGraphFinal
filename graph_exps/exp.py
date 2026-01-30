@@ -67,7 +67,7 @@ def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple
     return expanded_graph
 
 # функция для теста на перепрокладку при падении ребер
-def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1) -> Tuple[Tuple[str, int, float], Dict[str, Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]]]]:
+def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1) -> Tuple[List[Tuple[str, Tuple[int, float]]], Dict[str, Tuple[Tuple[int, int], float | None]]]:
     tasks_for_mcf = []
     for allocation_type, graph in graphs.items():
       graph_copy = graph.copy()
@@ -75,42 +75,40 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
     mcf_results = Parallel(n_jobs=n_jobs)(
        delayed(solve_mcf_for_exp)(graph, allocation_type)
        for graph, allocation_type in tqdm(tasks_for_mcf, desc="Solving initial MCF", total=len(tasks_for_mcf))
-    ) 
-    for allocation_type, graph in graphs.items():
-      mcf_results = 
-      for try_number in range(tries_for_allocation):
-        graph_copy = graph.copy()
-        tasks.append((graph_copy, allocation_type))
-      remaining_networks[allocation_type] = get_remaining_networks(graph)
-
-    algorithm_results = Parallel(n_jobs=n_jobs)(
-        delayed(allocate_spare_capacity)(graph, allocation_type)
-        for graph, allocation_type in tqdm(tasks, desc="Processing allocation", total=len(tasks))
     )
-    return algorithm_results, remaining_networks
+    remaining_networks_gammas_by_type = {}
+    for allocation_type, _, remaining_networks in mcf_results:
+      remaining_networks_by_failed_edge = [(edge, remaining_network) for edge, remaining_network in remaining_networks.items()]
+      remaining_networks_gammas = Parallel(n_jobs=n_jobs)(
+          delayed(solve_mcfp_wrapper)(edge, network)
+          for edge, network in tqdm(remaining_networks_by_failed_edge, desc=f"Solving remaining network MCFPs for {allocation_type}", total=len(remaining_networks_by_failed_edge))
+      )
+      remaining_networks_gammas_by_type[allocation_type] = remaining_networks_gammas
+
+    tasks_for_allocation = []
+    for allocation_type, input_for_algorithm, _ in mcf_results:
+      for try_number in range(tries_for_allocation):
+        tasks_for_allocation.append((input_for_algorithm, allocation_type))
+    algorithm_results = Parallel(n_jobs=n_jobs)(
+        delayed(allocate_spare_capacity)(input_for_algorithm, allocation_type)
+        for graph, allocation_type in tqdm(tasks_for_allocation, desc="Processing allocation", total=len(tasks_for_allocation))
+    )
+    return algorithm_results, remaining_networks_gammas_by_type
 
 # функция для получения итоговых результатов эксперимента по графу в нужном формате
-def get_right_output(allocation_results_raw: List[Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]], n_jobs=-1) -> pd.DataFrame:
+def get_right_output(allocation_results_raw: Tuple[List[Tuple[str, Tuple[int, float]]], Dict[str, Tuple[Tuple[int, int], float | None]]]) -> pd.DataFrame:
     result_dict = {}
     allocation_seen = {}
-    for allocation_type, result_raw in allocation_results_raw:
-      result = {'allocation solved': result_raw[1], 'rerouted volume': result_raw[2]}
+    
+    for allocation_type, allocation_result_raw in allocation_results_raw[0]:
+      result = {'allocation solved': allocation_result_raw[0], 'rerouted volume': allocation_result_raw[1]}
+      for edge, remaining_network_gamma in allocation_results_raw[1][allocation_type]:
+          result[f'gamma for failed {edge}'] = remaining_network_gamma
       if allocation_seen.get(allocation_type, False):
-        remaining_networks_gammas = allocation_seen.get(allocation_type)['gamma for remaining network']
-        for edge, remaining_network_gamma in remaining_networks_gammas.items():
-          result[f'gamma for failed {edge}'] = remaining_network_gamma
-        allocation_seen[allocation_type]['seen'] += 1
+          allocation_seen[allocation_type] += 1
       else:
-        remaining_network_by_failed_edge = [(edge, HuGraphForExps(remaining_network[0], remaining_network[1])) for edge, remaining_network in result_raw[0].items()]
-        remaining_networks_gammas = Parallel(n_jobs=n_jobs)(
-            delayed(solve_mcfp_wrapper)(edge, network)
-            for edge, network in tqdm(remaining_network_by_failed_edge, desc=f"Solving remaining network MCFPs for {allocation_type}", total=len(remaining_network_by_failed_edge))
-        )
-        for edge, remaining_network_gamma in remaining_networks_gammas:
-          result[f'gamma for failed {edge}'] = remaining_network_gamma
-        allocation_seen = {allocation_type: {'seen': 1}}
-        allocation_seen[allocation_type]['gamma for remaining network'] = {edge: remaining_network_gamma for edge, remaining_network_gamma in remaining_networks_gammas}
-      result_dict[(allocation_type, allocation_seen[allocation_type]['seen'])] = result.copy()
+          allocation_seen[allocation_type] = 1
+      result_dict[(allocation_type, allocation_seen[allocation_type])] = result.copy()
     result_df = pd.DataFrame(result_dict).T
     return result_df
   
