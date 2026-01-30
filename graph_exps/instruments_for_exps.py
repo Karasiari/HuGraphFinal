@@ -1,6 +1,7 @@
 from typing import Dict, Tuple, List
 
 import networkx as nx
+import numpy as np
 
 from .core import HuGraphForExps
 from .mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
