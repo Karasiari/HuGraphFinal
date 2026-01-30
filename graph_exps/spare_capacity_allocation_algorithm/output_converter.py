@@ -16,4 +16,4 @@ def convert_greedy_output_for_exp(SpareCapacityGreedyOutput) -> Tuple[bool, floa
     algorithm_failure_flag = SpareCapacityGreedyOutput.algorithm_failure_flag
     successfully_rerouted_demands_volume = SpareCapacityGreedyOutput.successfully_rerouted_demands_volume
     
-    return (algorithm_failure_flag, successfully_rerouted_demands_volume)#, SpareCapacityGreedyOutput.reserve_paths_by_failed_edge)
+    return (not algorithm_failure_flag, successfully_rerouted_demands_volume)#, SpareCapacityGreedyOutput.reserve_paths_by_failed_edge)
