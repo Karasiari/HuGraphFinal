@@ -12,12 +12,8 @@ from .classes_for_algorithm import (
     SpareCapacityGreedyOutput
 )
 
-def convert_greedy_output_for_exp(SpareCapacityGreedyOutput) -> Tuple[int, float]:
-    if SpareCapacityGreedyOutput.algorithm_failure_flag:
-        algorithm_failure_flag = 1
-    else:
-        algorithm_failure_flag = 0
-    
+def convert_greedy_output_for_exp(SpareCapacityGreedyOutput) -> Tuple[bool, float]:
+    algorithm_failure_flag = SpareCapacityGreedyOutput.algorithm_failure_flag
     successfully_rerouted_demands_volume = SpareCapacityGreedyOutput.successfully_rerouted_demands_volume
     
     return (algorithm_failure_flag, successfully_rerouted_demands_volume)#, SpareCapacityGreedyOutput.reserve_paths_by_failed_edge)
