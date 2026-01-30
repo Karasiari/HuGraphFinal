@@ -154,7 +154,7 @@ def compute_leftover_space(
 def make_weight1(
     scenario: FailureScenarioState,
     demand_volume: int,
-) -> Callable[[Node, Node, Mapping[str, Any]], Optional[int]]:
+) -> Callable[[Node, Node, int, Mapping[str, Any]], Optional[int]]:
     """Build the Objective-1 weight function.
 
     For an edge f, this returns the incremental increase in add(f) required to route
@@ -184,6 +184,19 @@ def make_weight1(
 
     return weight
 
+def create_proper_networkx_weight(weight_func: Callable[[Node, Node, int, Mapping[str, Any]], Optional[int]]) -> Callable[[Node, Node, Mapping[str, Any]], Optional[int]]:
+    def wrapper(u, v, attrs_dict):
+        min_weight = float('inf')
+        
+        for key, attrs in attrs_dict.items():
+            w = weight_func(u, v, key, attrs)
+            if w is not None and w < min_weight:
+                min_weight = w
+        
+        return min_weight if min_weight != float('inf') else None
+    
+    return wrapper
+
 
 def find_backup_path_nodes(
     instance: PreprocessedInstance,
@@ -205,14 +218,10 @@ def find_backup_path_nodes(
 
     try:
         dist_from_source = nx.single_source_dijkstra_path_length(
-            instance.graph, demand.source, weight=lambda u, v, d: min(
-                (weight1(u, v, k, a) for k, a in d.items())
-            )
+            instance.graph, demand.source, weight=create_proper_networkx_weight(weight1)
         )
         dist_to_target = nx.single_source_dijkstra_path_length(
-            instance.graph, demand.target, weight=lambda u, v, d: min(
-                (weight1(u, v, k, a) for k, a in d.items())
-            )
+            instance.graph, demand.target, weight=create_proper_networkx_weight(weight1)
         )
     except nx.NodeNotFound as exc:
         raise ValueError(
@@ -257,9 +266,7 @@ def find_backup_path_nodes(
 
     try:
         nodes_path = nx.dijkstra_path(
-            instance.graph, demand.source, demand.target, weight=lambda u, v, d: min(
-                (weight2(u, v, k, a) for k, a in d.items())
-            )
+            instance.graph, demand.source, demand.target, weight=create_proper_networkx_weight(weight2)
         )
         edges_path = []
         for u, v in pairwise(nodes_path):
