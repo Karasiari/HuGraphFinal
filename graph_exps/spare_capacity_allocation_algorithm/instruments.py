@@ -28,7 +28,7 @@ def build_indexed_graph(edge_inputs: Sequence[EdgeInput]) -> Tuple[nx.MultiDiGra
             seen[(u_for_key, v_for_key)] = agg_index
             indexes_by_agg_index[agg_index] = [idx]
             new_agg_index += 1
-        edge_key_by_index.append(EdgeKey(edge.u, edge.v, edge.key))
+        edge_key_by_index.append((edge.u, edge.v, edge.key))
         capacity_by_edge.append(edge.capacity)
         graph.add_edge(edge.u, edge.v, edge.key, idx=idx, capacity=edge.capacity)
 
