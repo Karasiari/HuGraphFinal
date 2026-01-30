@@ -94,23 +94,20 @@ def get_remaining_networks(graph: nx.MultiDiGraph, route_result: Dict[int, List[
 
 # отдельная функция для предварительного решения MCF в рамках эксперимента
 
-def solve_mcf_for_exp(graph: HuGraphForExp, allocation_type: str) -> Tuple[SpareCapacityGreedyInput, Dict[Tuple[int, int], Tuple[nx.DiGraph, nx.MultiDiGraph]]]:
+def solve_mcf_for_exp(graph: HuGraphForExp, allocation_type: str) -> Tuple[str, SpareCapacityGreedyInput, Dict[Tuple[int, int], Tuple[nx.DiGraph, nx.MultiDiGraph]]]:
     route_result, demands, solved, multidigraph = graph.solve_mcf()
     remaining_networks = get_remaining_networks(multidigraph, route_result, demands)
     input_for_allocate_spare_capacity_algorithm = convert_to_greedy_input(multidigraph, demands, route_result, random_seed)
-    return input_for_allocate_spare_capacity_algorithm, remaining_networks
+    return allocation_type, input_for_allocate_spare_capacity_algorithm, remaining_networks
 
 
 # функция для решения перераспределения трафика - в решении наш алгоритм
 
-def allocate_spare_capacity(graph: HuGraphForExps, allocation_type: str, random_seed: int | None = None) -> Tuple[str, Tuple[Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]], int, float]]:
-    route_result, demands, solved, multigraph = graph.solve_mcf()
-    remaining_networks = get_remaining_networks(multigraph, route_result, demands)
-    input_for_algorithm = convert_to_greedy_input(multigraph, demands, route_result, random_seed)
+def allocate_spare_capacity(input_for_algorithm: SpareCapacityGreedyInput, allocation_type: str) -> Tuple[str, Tuple[int, float]]:
     output_of_algorithm = run_greedy_spare_capacity_allocation(input_for_algorithm)
     allocation_results = convert_greedy_output_for_exp(output_of_algorithm)
 
-    return (allocation_type, allocation_results, remaining_networks)
+    return (allocation_type, allocation_results)
 
 
 # функция для решения max concurrent flow на остаточной сети (gamma) для параллельного расчета в рамках основного эксперимента
