@@ -215,13 +215,15 @@ def find_backup_path_nodes(
         return [demand.source]
 
     weight1 = make_weight1(scenario, demand_volume=demand.volume)
+    graph = instance.graph
+    reversed_graph = instance.graph.reverse(copy=False)
 
     try:
         dist_from_source = nx.single_source_dijkstra_path_length(
-            instance.graph, demand.source, weight=create_proper_networkx_weight(weight1)
+            graph, demand.source, weight=create_proper_networkx_weight(weight1)
         )
         dist_to_target = nx.single_source_dijkstra_path_length(
-            instance.graph, demand.target, weight=create_proper_networkx_weight(weight1)
+            reversed_graph, demand.target, weight=create_proper_networkx_weight(weight1)
         )
     except nx.NodeNotFound as exc:
         raise ValueError(
