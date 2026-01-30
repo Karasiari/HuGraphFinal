@@ -64,16 +64,16 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
             demand_to_backup_path: Dict[DemandID, EdgePath] = {}
             for demand_id in affected_demands:
                 demand = instance.demands_by_id[demand_id]
-                try:
-                    backup_edges = find_backup_path_nodes(instance, scenario, demand)
-                except ValueError:
-                    algorithm_failure_flag = True
-                    break
-                try:
-                    apply_backup_routing(instance, scenario, demand, backup_edges)
-                except ValueError:
-                    algorithm_failure_flag = True
-                    break
+                #try:
+                backup_edges = find_backup_path_nodes(instance, scenario, demand)
+                #except ValueError:
+                    #algorithm_failure_flag = True
+                    #break
+                #try:
+                apply_backup_routing(instance, scenario, demand, backup_edges)
+                #except ValueError:
+                    #algorithm_failure_flag = True
+                    #break
                 demand_to_backup_path[demand_id] = backup_edges
                 successfully_rerouted_demands_volume += demand.volume
 
