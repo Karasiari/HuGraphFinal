@@ -175,11 +175,11 @@ class HuGraphForExps:
         return gamma
 
     # ------------------------------------------------------------------------------------------------
-    # MCF -> (проложенные запросы, проложенные запросы с индексами, флаг - проложились ли все запросы)
+    # MCF -> (проложенные запросы, проложенные запросы с индексами, флаг - проложились ли все запросы, ориентированный мультиграф под алгоритм)
     # ------------------------------------------------------------------------------------------------
     def solve_mcf(self, eps: float = 0.1) ->  Tuple[Dict[int, List[Tuple[int, int, int]]], 
                                                     Dict[int, Tuple[int, int, int]],
-                                                    bool]:
+                                                    bool, nx.MultiDiGraph]:
         # получаем правильный формат input под наш алгоритм
         demands = []
         index, unsatisfied_subset = 0, set()
@@ -195,4 +195,4 @@ class HuGraphForExps:
         flow_paths, satisfied_demands_dict, solved = solve_multi_commodity_flow_problem(G_copy, self.C_max, demands, unsatisfied_subset, eps)
         self.mcf_solved = solved
 
-        return flow_paths, satisfied_demands_dict, solved
+        return flow_paths, satisfied_demands_dict, solved, G
