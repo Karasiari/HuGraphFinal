@@ -67,8 +67,8 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
                 try:
                     backup_edges = find_backup_path_nodes(instance, scenario, demand)
                 except ValueError:
-                    #algorithm_failure_flag = True
-                    #break
+                    algorithm_failure_flag = True
+                    break
                 try:
                     apply_backup_routing(instance, scenario, demand, backup_edges)
                 except ValueError:
