@@ -279,7 +279,7 @@ def find_backup_path_nodes(
         return edges_path
     except nx.NetworkXNoPath as exc:
         raise ValueError(
-            f"Objective-2 routing failed for demand {demand.demand_id} under failure of agg edge index {scenario.failed_agg_edge_index}."
+            f"Objective-2 routing failed for demand {demand.demand_id} under failure of agg edge index {scenario.failed_agg_edge_index} {shortest_len}."
         ) from exc
 
 
