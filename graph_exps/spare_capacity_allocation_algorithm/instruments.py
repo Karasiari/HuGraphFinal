@@ -20,7 +20,7 @@ def build_indexed_graph(edge_inputs: Sequence[EdgeInput]) -> Tuple[nx.MultiDiGra
             )
         idx = len(edge_key_by_index)
         u_for_key, v_for_key = min(edge.u, edge.v), max(edge.u, edge.v)
-        if seen.get([(u_for_key, v_for_key)], False):
+        if seen.get((u_for_key, v_for_key), False):
             agg_index = seen[(u_for_key, v_for_key)]
             indexes_by_agg_index[agg_index].append(idx)
         else:
