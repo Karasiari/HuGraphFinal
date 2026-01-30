@@ -206,14 +206,12 @@ def find_backup_path_nodes(
     try:
         dist_from_source = nx.single_source_dijkstra_path_length(
             instance.graph, demand.source, weight=lambda u, v, d: min(
-                (weight1(u, v, k, a) for k, a in d.items()),
-                default=float('inf')
+                (weight1(u, v, k, a) for k, a in d.items())
             )
         )
         dist_to_target = nx.single_source_dijkstra_path_length(
             instance.graph, demand.target, weight=lambda u, v, d: min(
-                (weight1(u, v, k, a) for k, a in d.items()),
-                default=float('inf')
+                (weight1(u, v, k, a) for k, a in d.items())
             )
         )
     except nx.NodeNotFound as exc:
@@ -260,8 +258,7 @@ def find_backup_path_nodes(
     try:
         nodes_path = nx.dijkstra_path(
             instance.graph, demand.source, demand.target, weight=lambda u, v, d: min(
-                (weight2(u, v, k, a) for k, a in d.items()),
-                default=float('inf')
+                (weight2(u, v, k, a) for k, a in d.items())
             )
         )
         edges_path = []
@@ -269,7 +266,7 @@ def find_backup_path_nodes(
             multiedges = instance.graph[u][v]
             min_key = min(
                 multiedges.keys(),
-                key=lambda k: weight2(u, v, k, multiedges[k]) or float('inf')
+                key=lambda k: weight2(u, v, k, multiedges[k])
             )
             edges_path.append(EdgeKey(u, v, min_key))
         return edges_path
