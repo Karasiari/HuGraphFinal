@@ -108,6 +108,8 @@ def solve_mcfp_wrapper(edge: Tuple[int, int], network: Tuple[nx.DiGraph, nx.Mult
     graph, demands_graph = network
     Graph = HuGraphForExps(graph, demands_graph)
     demands_laplacian = Graph.demands_laplacian
+    if not np.any(demands_laplacian):
+     return edge, float('inf')
     gamma = solve_max_concurrent_flow_problem(graph, demands_laplacian, solver_flag=False, break_flag=True, weight_name='capacity')
     return edge, gamma
 
