@@ -102,15 +102,6 @@ def solve_mcf_for_exp(graph: HuGraphForExp, allocation_type: str) -> Tuple[str, 
     return allocation_type, input_for_allocate_spare_capacity_algorithm, remaining_networks
 
 
-# функция для решения перераспределения трафика - в решении наш алгоритм
-
-def allocate_spare_capacity(input_for_algorithm: SpareCapacityGreedyInput, allocation_type: str) -> Tuple[str, Tuple[int, float]]:
-    output_of_algorithm = run_greedy_spare_capacity_allocation(input_for_algorithm)
-    allocation_results = convert_greedy_output_for_exp(output_of_algorithm)
-
-    return (allocation_type, allocation_results)
-
-
 # функция для решения max concurrent flow на остаточной сети (gamma) для параллельного расчета в рамках основного эксперимента
 
 def solve_mcfp_wrapper(edge: Tuple[int, int], network: Tuple[nx.DiGraph, nx.MultiDiGraph]) -> Tuple[Tuple[int, int], float | None]:
@@ -119,4 +110,12 @@ def solve_mcfp_wrapper(edge: Tuple[int, int], network: Tuple[nx.DiGraph, nx.Mult
     demands_laplacian = Graph.demands_laplacian
     gamma = solve_max_concurrent_flow_problem(graph, demands_laplacian, solver_flag=False, break_flag=True)
     return edge, gamma
+
+
+# функция для решения перераспределения трафика - в решении наш алгоритм
+
+def allocate_spare_capacity(input_for_algorithm: SpareCapacityGreedyInput, allocation_type: str) -> Tuple[str, Tuple[int, float]]:
+    output_of_algorithm = run_greedy_spare_capacity_allocation(input_for_algorithm)
+    allocation_results = convert_greedy_output_for_exp(output_of_algorithm)
+    return (allocation_type, allocation_results)
     
