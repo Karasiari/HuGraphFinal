@@ -273,7 +273,7 @@ def find_backup_path_nodes(
             multiedges = instance.graph[u][v]
             min_key = min(
                 multiedges.keys(),
-                key=lambda k: weight2(u, v, k, multiedges[k])
+                key=lambda k: weight2(u, v, k, multiedges[k]) or float('inf')
             )
             edges_path.append((u, v, min_key))
         return edges_path
