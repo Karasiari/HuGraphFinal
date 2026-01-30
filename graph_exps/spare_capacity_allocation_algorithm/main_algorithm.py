@@ -40,7 +40,6 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
 
     reserve_paths_by_failed_edge: Dict[Tuple[Node, Node], Dict[DemandID, EdgePath]] = {}
     algorithm_failure_flag: bool = False
-    print(len(failure_agg_edge_indices))
 
     for failed_agg_edge_idx in failure_agg_edge_indices:
         failed_edges_indices = instance.indexes_by_agg_index[failed_agg_edge_idx]
