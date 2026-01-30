@@ -4,10 +4,10 @@ from .classes_for_algorithm import *
 # Preprocessing
 # ----------------------------
 
-def build_indexed_graph(edge_inputs: Sequence[EdgeInput]) -> Tuple[nx.MultiDiGraph, Dict[int, List[int, ...]], List[EdgeKey], List[int]]:
+def build_indexed_graph(edge_inputs: Sequence[EdgeInput]) -> Tuple[nx.MultiDiGraph, Dict[int, List[int]], List[EdgeKey], List[int]]:
     """Build a directed NetworkX multigraph and assign a compact index to each edge, create mapping agg_index -> index."""
     graph = nx.MultiDiGraph()
-    indexes_by_agg_index: Dict[int, List[int, ...]] = {}
+    indexes_by_agg_index: Dict[int, List[int]] = {}
     edge_key_by_index: List[EdgeKey] = []
     capacity_by_edge: List[int] = []
     seen: Dict[Tuple[Node, Node], int] = {}
