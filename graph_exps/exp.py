@@ -121,10 +121,12 @@ def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[floa
     
     # распределяем новые ресурсы согласно типу аллокации и получаем расширенные сети
     additional_resources.sort(reverse=True)
+    
     expanded_graphs = {}
     for allocation_type in allocation_types:
-        expanded_graph = expand_network_for_type(graph, edges_with_alphas, additional_resources, allocation_type)
-        expanded_graphs[allocation_type] = expanded_graph
+        graph_copy = graph.copy()
+        expanded_graph = expand_network_for_type(graph_copy, edges_with_alphas, additional_resources, allocation_type)
+        expanded_graphs[allocation_type] = expanded_graph.copy()
 
     # проводим тест на перепрокладку на расширенных графах
     allocation_results_raw = allocation_test(expanded_graphs, tries_for_allocation)
