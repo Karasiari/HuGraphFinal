@@ -71,7 +71,7 @@ def get_remaining_networks(graph: nx.MultiDiGraph, route_result: Dict[int, List[
         slack_graph.add_nodes_from(graph)
         slack_demands_graph.add_nodes_from(graph)
         edge_reversed = edge_unoriented[1], edge_unoriented[0]
-        affected_demands_ids = demands_through_edge[edge_unoriented] + demands_through_edge[edge_reversed]
+        affected_demands_ids = demands_through_edge.get(edge_unoriented, []) + demands_through_edge.get(edge_reversed, [])
         affected_demands = []
         edges = slack_by_edge.copy()
         edges_list = []
