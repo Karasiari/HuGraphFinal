@@ -67,7 +67,7 @@ def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple
     return expanded_graph
 
 # функция для теста на перепрокладку при падении ребер
-def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1) -> Tuple[List[Tuple[str, Tuple[int, float]]], Dict[str, Tuple[Tuple[int, int], float | None]]]:
+def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1) -> Tuple[List[Tuple[str, Tuple[bool, float]]], Dict[str, Tuple[Tuple[int, int], float | None]]]:
     tasks_for_mcf = []
     for allocation_type, graph in graphs.items():
       graph_copy = graph.copy()
@@ -96,7 +96,7 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
     return algorithm_results, remaining_networks_gammas_by_type
 
 # функция для получения итоговых результатов эксперимента по графу в нужном формате
-def get_right_output(allocation_results_raw: Tuple[List[Tuple[str, Tuple[int, float]]], Dict[str, Tuple[Tuple[int, int], float | None]]]) -> pd.DataFrame:
+def get_right_output(allocation_results_raw: Tuple[List[Tuple[str, Tuple[bool, float]]], Dict[str, Tuple[Tuple[int, int], float | None]]]) -> pd.DataFrame:
     result_dict = {}
     allocation_seen = {}
     
