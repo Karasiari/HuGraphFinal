@@ -85,7 +85,7 @@ def get_remaining_networks(graph: nx.MultiDiGraph, route_result: Dict[int, List[
                 edges[edge_oriented] += capacity
         for edge_oriented, capacity in edges.items():
             if edge_oriented not in (edge_unoriented, edge_reversed):
-                edges_list.append(edge_oriented, {"capacity": capacity})
+                edges_list.append((edge_oriented[0], edge_oriented[1], {"capacity": capacity}))
         slack_graph.add_edges_from(edges_list)
         slack_demands_graph.add_edges_from(affected_demands)
         remaining_networks[edge_unoriented] = (slack_graph, slack_demands_graph)
