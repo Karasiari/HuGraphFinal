@@ -290,7 +290,7 @@ def apply_backup_routing(
     backup_path_edges: Sequence[EdgeKey],
 ) -> None:
     """Apply the chosen backup route: update global add and per-scenario routed volume."""
-    if demand.volume == 0 or len(backup_path_nodes) < 2:
+    if demand.volume == 0 or len(backup_path_edges) < 1:
         return
 
     leftover = scenario.leftover_by_edge.values
