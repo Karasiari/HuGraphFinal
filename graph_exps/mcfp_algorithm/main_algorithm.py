@@ -18,7 +18,7 @@ from .instruments import *
 # основной алгоритм
 # -----------------
 
-def solve_max_concurrent_flow_problem(graph: nx.DiGraph, weight_name: str = 'weight', demands_laplacian: np.ndarray, solver_flag: bool, break_flag: bool = True) -> float | None:
+def solve_max_concurrent_flow_problem(graph: nx.DiGraph, demands_laplacian: np.ndarray, solver_flag: bool, break_flag: bool = True, weight_name: str = 'weight') -> float | None:
   # получаем incidence matrix и capacities рёбер
   incidence_mat = get_incidence_matrix_for_mcfp(graph)
   bandwidth = get_capacities_for_mcfp(graph, weight_name)
