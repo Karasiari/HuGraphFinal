@@ -41,7 +41,7 @@ def expand_graph(graph: HuGraphForExps, source_target_sequence_to_add: List[Tupl
 
 def get_remaining_networks(graph: nx.MultiDiGraph, route_result: Dict[int, List[Tuple[int, int, int]]], demands: Dict[int, Tuple[int, int, int]]) -> Dict[Tuple[int, int], Tuple[nx.DiGraph, nx.MultiDiGraph]]:
     slack_by_edge: Dict[Tuple[int, int], int] = {}
-    demands_through_edge: Dict[Tuple[int, int], List[int, ...]] = {}
+    demands_through_edge: Dict[Tuple[int, int], List[int]] = {}
     unique_edges: Dict[Tuple[int, int], bool] = []
     remaining_networks: Dict[Tuple[int, int], Tuple[nx.DiGraph, nx.MultiDiGraph]] = {}
 
