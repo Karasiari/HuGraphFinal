@@ -275,7 +275,7 @@ def find_backup_path_nodes(
                 multiedges.keys(),
                 key=lambda k: weight2(u, v, k, multiedges[k])
             )
-            edges_path.append(EdgeKey(u, v, min_key))
+            edges_path.append((u, v, min_key))
         return edges_path
     except nx.NetworkXNoPath as exc:
         raise ValueError(
