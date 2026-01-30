@@ -68,9 +68,16 @@ def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple
 
 # функция для теста на перепрокладку при падении ребер
 def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1) -> Tuple[Tuple[str, int, float], Dict[str, Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]]]]:
-    remaining_networks: Dict[str, Dict[Tuple[int, int], Tuple[nx.Graph, nx.Graph]]] = {}
-    tasks = []
+    tasks_for_mcf = []
     for allocation_type, graph in graphs.items():
+      graph_copy = graph.copy()
+      tasks_for_mcf.append((graph_copy, allocation_type))
+    mcf_results = Parallel(n_jobs=n_jobs)(
+       delayed(solve_mcf_for_exp)(graph, allocation_type)
+       for graph, allocation_type in tqdm(tasks_for_mcf, desc="Solving initial MCF", total=len(tasks_for_mcf))
+    ) 
+    for allocation_type, graph in graphs.items():
+      mcf_results = 
       for try_number in range(tries_for_allocation):
         graph_copy = graph.copy()
         tasks.append((graph_copy, allocation_type))
