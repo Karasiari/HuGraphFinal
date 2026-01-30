@@ -4,41 +4,40 @@ from .classes_for_algorithm import *
 # Preprocessing
 # ----------------------------
 
-def build_indexed_graph(edge_inputs: Sequence[EdgeInput]) -> Tuple[nx.Graph, List[EdgeKey], List[int]]:
-    """Build an undirected NetworkX graph and assign a compact index to each edge."""
-    graph = nx.Graph()
+def build_indexed_graph(edge_inputs: Sequence[EdgeInput]) -> Tuple[nx.MultiDiGraph, Dict[int, List[int, ...]], List[EdgeKey], List[int]]:
+    """Build a directed NetworkX multigraph and assign a compact index to each edge, create mapping agg_index -> index."""
+    graph = nx.MultiDiGraph()
+    indexes_by_agg_index: Dict[int, List[int, ...]] = {}
     edge_key_by_index: List[EdgeKey] = []
     capacity_by_edge: List[int] = []
-    seen: Dict[EdgeKey, int] = {}
+    seen: Dict[Tuple[Node, Node], int] = {}
 
+    new_agg_index = 0
     for edge in edge_inputs:
         if edge.capacity < 0:
             raise ValueError(
                 f"Edge capacity must be non-negative, got {edge.capacity} for edge {edge.u}-{edge.v}."
             )
-
-        key = canonical_edge_key(edge.u, edge.v)
-        if key in seen:
-            existing_idx = seen[key]
-            if capacity_by_edge[existing_idx] != edge.capacity:
-                raise ValueError(
-                    f"Duplicate edge {key} with conflicting capacities: "
-                    f"{capacity_by_edge[existing_idx]} vs {edge.capacity}."
-                )
-            continue
-
         idx = len(edge_key_by_index)
-        seen[key] = idx
-        edge_key_by_index.append(key)
+        u_for_key, v_for_key = min(edge.u, edge.v), max(edge.u, edge.v)
+        if seen.get([(u_for_key, v_for_key)], False):
+            agg_index = seen[(u_for_key, v_for_key)]
+            indexes_by_agg_index[agg_index].append(idx)
+        else:
+            agg_index = new_agg_index
+            seen[(u_for_key, v_for_key)] = agg_index
+            indexes_by_agg_index[agg_index] = [idx]
+            new_agg_index += 1
+        edge_key_by_index.append(EdgeKey(edge.u, edge.v, edge.key))
         capacity_by_edge.append(edge.capacity)
-        graph.add_edge(edge.u, edge.v, idx=idx, capacity=edge.capacity)
+        graph.add_edge(edge.u, edge.v, edge.key, idx=idx, capacity=edge.capacity)
 
-    return graph, edge_key_by_index, capacity_by_edge
+    return graph, indexes_by_agg_index, edge_key_by_index, capacity_by_edge
 
 
 def process_demands(
     demand_inputs: Sequence[DemandInput],
-    graph: nx.Graph,
+    graph: nx.MultiDiGraph,
     edge_count: int,
 ) -> Tuple[Dict[DemandID, ProcessedDemand], List[int], List[List[DemandID]]]:
     """Validate demand paths, derive edge indices, and compute initial edge loads."""
@@ -57,10 +56,10 @@ def process_demands(
         current_node = demand.source
         edge_indices: List[int] = []
 
-        for step, (u, v) in enumerate(demand.initial_edge_path):
-            if not graph.has_edge(u, v):
+        for step, (u, v, key) in enumerate(demand.initial_edge_path):
+            if not graph.has_edge(u, v, key):
                 raise ValueError(
-                    f"Demand {demand.demand_id} initial_edge_path uses a non-existent edge: {u} - {v}."
+                    f"Demand {demand.demand_id} initial_edge_path uses a non-existent edge: {u} - {v} - {key}."
                 )
 
             if current_node == u:
@@ -73,7 +72,7 @@ def process_demands(
                     f"current node {current_node}, edge endpoints {(u, v)}."
                 )
 
-            edge_idx = graph[u][v]["idx"]
+            edge_idx = graph[u][v][key]["idx"]
             edge_indices.append(edge_idx)
             if demand.volume:
                 initial_load_by_edge[edge_idx] += demand.volume
@@ -104,7 +103,7 @@ def process_demands(
 
 def preprocess_instance(input_data: SpareCapacityGreedyInput) -> PreprocessedInstance:
     """Transform raw input into an indexed instance and validate initial feasibility."""
-    graph, edge_key_by_index, capacity_by_edge = build_indexed_graph(input_data.edges)
+    graph, indexes_by_agg_index, edge_key_by_index, capacity_by_edge = build_indexed_graph(input_data.edges)
     if not edge_key_by_index:
         raise ValueError("Input graph must contain at least one edge.")
 
@@ -124,7 +123,7 @@ def preprocess_instance(input_data: SpareCapacityGreedyInput) -> PreprocessedIns
 
     return PreprocessedInstance(
         graph=graph,
-        directed_graph_view=graph.to_directed(as_view=True),
+        indexes_by_agg_index=indexes_by_agg_index,
         edge_key_by_index=edge_key_by_index,
         capacity_by_edge=capacity_by_edge,
         slack_by_edge=slack_by_edge,
@@ -150,44 +149,6 @@ def compute_leftover_space(
             continue
         for edge_idx in demand.initial_edge_indices:
             leftover.increment(edge_idx, demand.volume)
-            
-
-def build_remaining_network_for_failed_edge(
-    instance: PreprocessedInstance,
-    failed_edge_idx: int,
-    leftover_by_edge: PositiveTouchedArray,
-    affected_demands: Sequence[DemandID]
-) -> Tuple[nx.Graph, nx.Graph]:
-    """
-    Build an undirected NetworkX graph of a remaining topology network for the failed edge
-    and an undirected NetworkX graph of a remaining traffic network for the failed edge
-    """
-    topology_graph = nx.Graph()
-    traffic_graph = nx.Graph()
-    topology_graph.add_nodes_from(instance.graph.nodes())
-    traffic_graph.add_nodes_from(instance.graph.nodes())
-    traffic_aggregated: Dict[EdgeKey, float] = {}
-    leftover = leftover_by_edge.values
-
-    for edge_idx, edge_key in enumerate(instance.edge_key_by_index):
-        if edge_idx != failed_edge_idx:
-            edge_capacity = instance.slack_by_edge[edge_idx] + leftover[edge_idx]
-            if edge_capacity > 0:
-                topology_graph.add_edge(edge_key[0], edge_key[1], capacity=edge_capacity)
-                
-    for demand_id in affected_demands:
-        demand = instance.demands_by_id[demand_id]
-        if demand.volume <= 0:
-            continue
-        demand_key = canonical_edge_key(demand.source, demand.target)
-        if traffic_aggregated.get(demand_key, False):
-            traffic_aggregated[demand_key] += float(demand.volume)
-        else:
-            traffic_aggregated[demand_key] = float(demand.volume)
-    for demand_key, demand_volume in traffic_aggregated.items():
-        traffic_graph.add_edge(demand_key[0], demand_key[1], weight=demand_volume)
-
-    return (topology_graph, traffic_graph)
     
 
 def make_weight1(
@@ -200,15 +161,15 @@ def make_weight1(
     `demand_volume` through f under the current scenario state. If the edge is not
     usable (failed edge or physical capacity violation), returns None to hide the edge.
     """
-    failed_edge_idx = scenario.failed_edge_index
+    failed_edges_indices = scenario.failed_edges_indices
     slack = scenario.slack_by_edge
     leftover = scenario.leftover_by_edge.values
     routed = scenario.routed_by_edge.values
     add = scenario.add_by_edge
 
-    def weight(_u: Node, _v: Node, attrs: Mapping[str, Any]) -> Optional[int]:
+    def weight(_u: Node, _v: Node, _key: int, attrs: Mapping[str, Any]) -> Optional[int]:
         edge_idx = attrs["idx"]
-        if edge_idx == failed_edge_idx:
+        if edge_idx in failed_edges_indices:
             return None
 
         # Physical capacity for rerouted demands in this scenario:
@@ -228,8 +189,8 @@ def find_backup_path_nodes(
     instance: PreprocessedInstance,
     scenario: FailureScenarioState,
     demand: ProcessedDemand,
-) -> List[Node]:
-    """Compute the demand's backup path as a node sequence.
+) -> List[EdgeKey]:
+    """Compute the demand's backup path as an edge sequence.
 
     Lexicographic objectives:
       1) minimize sum(max(0, volume - allowance(edge))) over edges in the path
@@ -256,22 +217,22 @@ def find_backup_path_nodes(
 
     if demand.target not in dist_from_source:
         raise ValueError(
-            f"No feasible backup path for demand {demand.demand_id} under failure of edge index {scenario.failed_edge_index}."
+            f"No feasible backup path for demand {demand.demand_id} under failure of agg edge index {scenario.failed_agg_edge_index}."
         )
 
     shortest_len = dist_from_source[demand.target]
 
-    failed_edge_idx = scenario.failed_edge_index
+    failed_edges_indices = scenario.failed_edges_indices
     slack = scenario.slack_by_edge
     leftover = scenario.leftover_by_edge.values
     routed = scenario.routed_by_edge.values
     add = scenario.add_by_edge
     volume = demand.volume
 
-    def weight2(u: Node, v: Node, attrs: Mapping[str, Any]) -> Optional[int]:
+    def weight2(u: Node, v: Node, key: int, attrs: Mapping[str, Any]) -> Optional[int]:
         """Objective-2 weight, restricted to edges on Objective-1 shortest s-t paths."""
         edge_idx = attrs["idx"]
-        if edge_idx == failed_edge_idx:
+        if edge_idx in failed_edges_indices:
             return None
 
         remaining_capacity = slack[edge_idx] + leftover[edge_idx] - routed[edge_idx]
@@ -291,12 +252,21 @@ def find_backup_path_nodes(
         return allowance if allowance < volume else volume
 
     try:
-        return nx.dijkstra_path(
-            instance.directed_graph_view, demand.source, demand.target, weight=weight2
+        nodes_path = nx.dijkstra_path(
+            instance.graph, demand.source, demand.target, weight=weight2
         )
+        edges_path = []
+        for u, v in pairwise(nodes_path):
+            multiedges = instance.graph[u][v]
+            min_key = min(
+                multiedges.keys(),
+                key=lambda k: weight2(u, v, k, multiedges[k]) or float('inf')
+            )
+            edges_path.append(EdgeKey(u, v, min_key))
+        return edges_path
     except nx.NetworkXNoPath as exc:
         raise ValueError(
-            f"Objective-2 routing failed for demand {demand.demand_id} under failure of edge index {scenario.failed_edge_index}."
+            f"Objective-2 routing failed for demand {demand.demand_id} under failure of agg edge index {scenario.failed_agg_edge_index}."
         ) from exc
 
 
@@ -304,7 +274,7 @@ def apply_backup_routing(
     instance: PreprocessedInstance,
     scenario: FailureScenarioState,
     demand: ProcessedDemand,
-    backup_path_nodes: Sequence[Node],
+    backup_path_edges: Sequence[EdgeKey],
 ) -> None:
     """Apply the chosen backup route: update global add and per-scenario routed volume."""
     if demand.volume == 0 or len(backup_path_nodes) < 2:
@@ -316,8 +286,9 @@ def apply_backup_routing(
     slack = scenario.slack_by_edge
     volume = demand.volume
 
-    for u, v in pairwise(backup_path_nodes):
-        edge_idx = instance.graph[u][v]["idx"]
+    for edge in backup_path_edges:
+        u, v, key = edge
+        edge_idx = instance.graph[u][v][key]["idx"]
 
         # Physical feasibility (defensive check)
         remaining_capacity = slack[edge_idx] + leftover[edge_idx] - routed[edge_idx]
@@ -338,9 +309,3 @@ def apply_backup_routing(
                 )
 
         scenario.routed_by_edge.increment(edge_idx, volume)
-
-
-def nodes_to_oriented_edge_path(nodes_path: Sequence[Node]) -> EdgePath:
-    """Convert a node path [n0, n1, ..., nk] into an oriented edge path [(n0,n1),...,(n{k-1},nk)]."""
-    return [(u, v) for u, v in pairwise(nodes_path)]
-
