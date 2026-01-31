@@ -104,6 +104,7 @@ def convert_to_greedy_input(
     demands: Dict[int, Tuple[int, int, int]],
     route_result: Dict[int, List[Tuple[int, int, int]]],
     epsilon: float = 1.0,
+    available_volumes: Tuple[int, ...] = (1,)
     random_seed: int | None = None,
 ) -> SpareCapacityGreedyInput:
     """Convert topology multigraph (graph) and the result of solving MCF problem (route_result) into SpareCapacityGreedyInput.
@@ -121,6 +122,8 @@ def convert_to_greedy_input(
         The routing solution of MCF problem containing paths for successfully routed demands.
     epsilon:
         Scaling parameter to reserve additional demands in allocation algorithm.
+    available_volumes:
+        Available demand volume values to discretize scaled additional demands.
     random_seed:
         Optional seed for reproducible randomization in the greedy algorithm.
 
@@ -137,5 +140,6 @@ def convert_to_greedy_input(
         edges=edge_inputs,
         demands=demand_inputs,
         epsilon=epsilon,
+        available_volumes=available_volumes,
         random_seed=random_seed,
     )
