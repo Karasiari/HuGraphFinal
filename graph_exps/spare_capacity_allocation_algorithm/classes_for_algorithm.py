@@ -40,6 +40,7 @@ class DemandInput:
 class AdditionalDemand:
     """Class for additional demands' representation
     """
+    demand_id: str = 'additional'
     source: Node
     target: Node
     volume: int
