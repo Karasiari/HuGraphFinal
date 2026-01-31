@@ -56,12 +56,12 @@ def get_remaining_networks_and_volume_to_reroute(
     graph: nx.MultiDiGraph, 
     route_result: RouteResult, 
     demands: DemandsDict
-) -> Tuple[Dict[EdgeKey, RemainingNetwork], Dict[EdgeKey, int]]:
+) -> Tuple[Dict[EdgeKey, RemainingNetwork], int]:
     slack_by_edge: Dict[EdgeKey, int] = {}
     demands_through_edge: Dict[EdgeKey, List[int]] = {}
     unique_edges: Dict[EdgeKey, bool] = {}
     remaining_networks: Dict[EdgeKey, RemainingNetwork] = {}
-    volume_to_reroute_by_edge: Dict[EdgeKey, int] = {}
+    volume_to_reroute: int = 0
 
     for u, v, data in graph.edges(data=True):
         edge_oriented = (u, v)
@@ -93,7 +93,6 @@ def get_remaining_networks_and_volume_to_reroute(
         affected_demands = []
         edges = slack_by_edge.copy()
         edges_list = []
-        volume_to_reroute = 0
         for demand_id in affected_demands_ids:
             affected_demand = demands[demand_id]
             source, target, capacity = affected_demand
@@ -109,9 +108,8 @@ def get_remaining_networks_and_volume_to_reroute(
         slack_graph.add_edges_from(edges_list)
         slack_demands_graph.add_edges_from(affected_demands)
         remaining_networks[edge_unoriented] = (slack_graph, slack_demands_graph)
-        volume_to_reroute_by_edge[edge_unoriented] = volume_to_reroute
     
-    return remaining_networks, volume_to_reroute_by_edge
+    return remaining_networks, volume_to_reroute
     
 
 # отдельная функция для предварительного решения MCF в рамках эксперимента
@@ -122,11 +120,11 @@ def solve_mcf_for_exp(
     epsilon: float = 1.0, 
     available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),), 
     random_seed: int | None = None
-) -> Tuple[str, SpareCapacityGreedyInput, Dict[EdgeKey, RemainingNetwork], Dict[EdgeKey, int]]:
+) -> Tuple[str, SpareCapacityGreedyInput, Dict[EdgeKey, RemainingNetwork], int]:
     route_result, demands, solved, multidigraph = graph.solve_mcf()
-    remaining_networks, volume_to_reroute_by_edge = get_remaining_networks_and_volume_to_reroute(multidigraph, route_result, demands)
+    remaining_networks, volume_to_reroute = get_remaining_networks_and_volume_to_reroute(multidigraph, route_result, demands)
     input_for_allocate_spare_capacity_algorithm = convert_to_greedy_input(multidigraph, demands, route_result, epsilon, available_volumes, random_seed)
-    return allocation_type, input_for_allocate_spare_capacity_algorithm, remaining_networks, volume_to_reroute_by_edge
+    return allocation_type, input_for_allocate_spare_capacity_algorithm, remaining_networks, volume_to_reroute
 
 
 # функция для решения max concurrent flow на остаточной сети (gamma) для параллельного расчета в рамках основного эксперимента
