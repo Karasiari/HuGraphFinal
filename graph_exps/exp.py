@@ -101,7 +101,8 @@ def allocation_test(
     random_seed: int | None = None,
     n_jobs=-1
 ) -> Tuple[List[AllocationResult], 
-           Dict[str, List[EdgeWithParameter]]]:
+           Dict[str, List[EdgeWithParameter]],
+           Dict[str, int]]:
     """
     Функция для проведения перепрокладки на уже расширенном графе:
     1) Решает задачу MCF на расширенном графе:
@@ -121,6 +122,10 @@ def allocation_test(
           algorithm_results - результаты решений задачи перепрокладки
           remaining_networks_gammas_by_type - словарь по типу распределения ресурсов 
                                               списков gamma остаточной сети по упавшему ребру
+          volume_to_reroute_by_type - суммарное значение volume запросов для перепрокладки 
+                                      для всех сценариев падений ребер
+                                      по типу распределения ресурсов,
+                                      знаменатель для нормировки rerouted volume ratio
     """
     # решаем исходный MCF с помощью параллельного расчета на всех расширенных графах
     tasks_for_mcf = []
@@ -134,30 +139,33 @@ def allocation_test(
 
     # параллельно считаем gamma для остаточных сетей
     remaining_networks_gammas_by_type = {}
-    for allocation_type, _, remaining_networks in mcf_results:
+    volume_to_reroute_by_type = {}
+    for allocation_type, _, remaining_networks, volume_to_reroute in mcf_results:
       remaining_networks_by_failed_edge = [(edge, remaining_network) for edge, remaining_network in remaining_networks.items()]
       remaining_networks_gammas = Parallel(n_jobs=n_jobs)(
           delayed(solve_mcfp_wrapper)(edge, network)
           for edge, network in tqdm(remaining_networks_by_failed_edge, desc=f"Solving remaining network MCFPs for {allocation_type}", total=len(remaining_networks_by_failed_edge))
       )
       remaining_networks_gammas_by_type[allocation_type] = remaining_networks_gammas
+      volume_to_reroute_by_type[allocation_type] = volume_to_reroute
 
     # параллельно запускаем алгоритм spare capacity allocation
     tasks_for_allocation = []
-    for allocation_type, input_for_algorithm, _ in mcf_results:
+    for allocation_type, input_for_algorithm, _, _ in mcf_results:
       for try_number in range(tries_for_allocation):
         tasks_for_allocation.append((input_for_algorithm, allocation_type))
     algorithm_results = Parallel(n_jobs=n_jobs)(
         delayed(allocate_spare_capacity)(input_for_algorithm, allocation_type)
         for graph, allocation_type in tqdm(tasks_for_allocation, desc="Processing allocation", total=len(tasks_for_allocation))
     )
-    return algorithm_results, remaining_networks_gammas_by_type
+    return algorithm_results, remaining_networks_gammas_by_type, volume_to_reroute_by_type
 
 # функция для получения итоговых результатов эксперимента по графу в нужном формате
 
 def get_right_output(
     allocation_results_raw: Tuple[List[AllocationResult], 
-                            Dict[str, List[EdgeWithParameter]]]
+                            Dict[str, List[EdgeWithParameter]],
+                            Dict[str, int]]
 ) -> pd.DataFrame:
     """
     По результатам эксперимента формируем табличку pandas DataFrame
@@ -167,21 +175,25 @@ def get_right_output(
           -- algorithm_results - результаты решений задачи перепрокладки
           -- remaining_networks_gammas_by_type - словарь по типу распределения ресурсов 
                                                  списков gamma остаточной сети по упавшему ребру
+          -- volume_to_reroute_by_type - суммарное значение volume запросов для перепрокладки 
+                                         для всех сценариев падений ребер
+                                         по типу распределения ресурсов,
+                                         знаменатель для нормировки rerouted volume ratio
     Output:
           результаты в виде pandas DataFrame
     """
     result_dict = {}
     gammas_dict = {}
     allocation_seen = {}
-    algorithm_results, remaining_networks_gammas_by_type = allocation_results_raw
+    algorithm_results, remaining_networks_gammas_by_type, volume_to_reroute_by_type = allocation_results_raw
   
     for allocation_type, remaining_networks_gammas in remaining_networks_gammas_by_type.items():
       gammas_dict[allocation_type] = {}
       for edge, remaining_network_gamma in remaining_networks_gammas:
-        gammas_dict[allocation_type][f'gamma for failed {edge}'] = remaining_network_gamma
+        gammas_dict[allocation_type][f'gamma for failed {edge}'] = round(remaining_network_gamma, 2)
   
     for allocation_type, result_raw in algorithm_results:
-      result = {'allocation solved': result_raw[0], 'rerouted volume': result_raw[1]}
+      result = {'allocation solved': result_raw[0], 'rerouted volume ratio': round(result_raw[1] / volume_to_reroute_by_type[allocation_type], 2)}
       result |= gammas_dict[allocation_type]
       if allocation_seen.get(allocation_type, False):
           allocation_seen[allocation_type] += 1
