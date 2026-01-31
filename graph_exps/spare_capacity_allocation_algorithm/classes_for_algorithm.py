@@ -131,14 +131,14 @@ class PositiveTouchedArray:
 class PreprocessedInstance:
     """Problem instance transformed to edge-indexed structures for fast access."""
     graph: nx.MultiDiGraph
-    epsilon: float = 1.0
-    available_volumes: Tuple[VolumeWithProbabilty, ...] = ((1, 1.0),)
     indexes_by_agg_index: Dict[int, List[int]]
     edge_key_by_index: List[EdgeKey]
     capacity_by_edge: List[int]
     slack_by_edge: List[int]
     demands_by_id: Dict[DemandID, ProcessedDemand]
     demands_using_edge: List[List[DemandID]]  # edge_idx -> [demand_id,...]
+    epsilon: float = 1.0
+    available_volumes: Tuple[VolumeWithProbabilty, ...] = ((1, 1.0),)
 
 
 @dataclass(slots=True)
