@@ -41,7 +41,8 @@ class SpareCapacityGreedyInput:
     """Complete input for the greedy spare-capacity allocation algorithm."""
     edges: Sequence[EdgeInput]
     demands: Sequence[DemandInput]
-    epsilon: float
+    epsilon: float = 1.0
+    available_volumes: Tuple[int, ...] = (1,)
     random_seed: Optional[int] = None
 
 
@@ -119,6 +120,8 @@ class PositiveTouchedArray:
 class PreprocessedInstance:
     """Problem instance transformed to edge-indexed structures for fast access."""
     graph: nx.MultiDiGraph
+    epsilon: float = 1.0
+    available_volumes: Tuple[int, ...] = (1,)
     indexes_by_agg_index: Dict[int, List[int]]
     edge_key_by_index: List[EdgeKey]
     capacity_by_edge: List[int]
