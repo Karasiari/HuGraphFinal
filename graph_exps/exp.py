@@ -156,7 +156,7 @@ def allocation_test(
         tasks_for_allocation.append((input_for_algorithm, allocation_type))
     algorithm_results = Parallel(n_jobs=n_jobs)(
         delayed(allocate_spare_capacity)(input_for_algorithm, allocation_type)
-        for graph, allocation_type in tqdm(tasks_for_allocation, desc="Processing allocation", total=len(tasks_for_allocation))
+        for input_for_algorithm, allocation_type in tqdm(tasks_for_allocation, desc="Processing allocation", total=len(tasks_for_allocation))
     )
     return algorithm_results, remaining_networks_gammas_by_type, volume_to_reroute_by_type
 
