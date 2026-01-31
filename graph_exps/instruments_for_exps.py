@@ -6,6 +6,14 @@ import numpy as np
 from .core import HuGraphForExps
 from .mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
 
+# алиасы для читаемости outputов
+EdgeWithParameter = Tuple[Tuple[int, int], float | None]
+AllocationResult = Tuple[str, Tuple[bool, float]]
+EdgeKey = Tuple[int, int]
+RouteResult: Dict[int, List[Tuple[int, int, int]]]
+DemandsDict: Dict[int, Tuple[int, int, int]]
+RemainingNetwork = Tuple[nx.DiGraph, nx.MultiDiGraph]
+
 from .spare_capacity_allocation_algorithm.classes_for_algorithm import SpareCapacityGreedyInput # импорт класса под нужный input в алгоритм перепрокладки
 from .spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input # импорт функции для преобразования данных под алгоритм перераспределения трафика
 from .spare_capacity_allocation_algorithm.main_algorithm import run_greedy_spare_capacity_allocation # импорт основной функции алгоритма перепрокладки
@@ -14,13 +22,14 @@ from .spare_capacity_allocation_algorithm.output_converter import convert_greedy
 # ----------------------------------------------------------------------------------
 # вспомогательные функции для основного экспа - для расчетов, параллелизаций и проч.
 # ----------------------------------------------------------------------------------
- 
+
+# функция для расчета α для ребра
+
 def compute_alpha_for_edge(graph_state, source, target):
     # Восстанавливаем граф из сериализованного состояния (например, pickle)
     import pickle
     graph = pickle.loads(graph_state)
     
-    # Берём первый мультребро
     keys = list(graph.multigraph.get_edge_data(source, target).keys())
     if not keys:
         return ((source, target), float('nan'))
@@ -28,23 +37,31 @@ def compute_alpha_for_edge(graph_state, source, target):
     
     graph.change_multiedge(source, target, "insert", key, 80)
     alpha = graph.calculate_alpha()
-    # graph.restore_graph() не нужен, т.к. граф временный
     return ((source, target), alpha)
     
+# функция для расширения графа
 
-def expand_graph(graph: HuGraphForExps, source_target_sequence_to_add: List[Tuple[Tuple[int, int], float]]) -> HuGraphForExps:
+def expand_graph(
+    graph: HuGraphForExps, 
+    source_target_sequence_to_add: List[EdgeWithParameter]
+) -> HuGraphForExps:
     for edge, capacity in source_target_sequence_to_add:
         graph.change_multiedge(edge[0], edge[1], type='insert', capacity=capacity)
     return graph
 
 
-# функция для отдельного расчета остаточных сетей
+# функция для отдельного расчета части результатов решения исходного MCF
 
-def get_remaining_networks(graph: nx.MultiDiGraph, route_result: Dict[int, List[Tuple[int, int, int]]], demands: Dict[int, Tuple[int, int, int]]) -> Dict[Tuple[int, int], Tuple[nx.DiGraph, nx.MultiDiGraph]]:
-    slack_by_edge: Dict[Tuple[int, int], int] = {}
-    demands_through_edge: Dict[Tuple[int, int], List[int]] = {}
-    unique_edges: Dict[Tuple[int, int], bool] = {}
-    remaining_networks: Dict[Tuple[int, int], Tuple[nx.DiGraph, nx.MultiDiGraph]] = {}
+def get_remaining_networks_and_volume_to_reroute(
+    graph: nx.MultiDiGraph, 
+    route_result: RouteResult, 
+    demands: DemandsDict
+) -> Tuple[Dict[EdgeKey, RemainingNetwork], Dict[EdgeKey, int]]:
+    slack_by_edge: Dict[EdgeKey, int] = {}
+    demands_through_edge: Dict[EdgeKey, List[int]] = {}
+    unique_edges: Dict[EdgeKey, bool] = {}
+    remaining_networks: Dict[EdgeKey, RemainingNetwork] = {}
+    volume_to_reroute_by_edge: Dict[EdgeKey, int] = {}
 
     for u, v, data in graph.edges(data=True):
         edge_oriented = (u, v)
@@ -76,9 +93,11 @@ def get_remaining_networks(graph: nx.MultiDiGraph, route_result: Dict[int, List[
         affected_demands = []
         edges = slack_by_edge.copy()
         edges_list = []
+        volume_to_reroute = 0
         for demand_id in affected_demands_ids:
             affected_demand = demands[demand_id]
             source, target, capacity = affected_demand
+            volume_to_reroute += capacity
             affected_demands.append((source, target, {"weight": capacity}))
             edges_to_restore = route_result[demand_id]
             for u, v, _ in edges_to_restore:
@@ -90,22 +109,32 @@ def get_remaining_networks(graph: nx.MultiDiGraph, route_result: Dict[int, List[
         slack_graph.add_edges_from(edges_list)
         slack_demands_graph.add_edges_from(affected_demands)
         remaining_networks[edge_unoriented] = (slack_graph, slack_demands_graph)
+        volume_to_reroute_by_edge[edge_unoriented] = volume_to_reroute
     
-    return remaining_networks
+    return remaining_networks, volume_to_reroute_by_edge
     
 
 # отдельная функция для предварительного решения MCF в рамках эксперимента
 
-def solve_mcf_for_exp(graph: HuGraphForExps, allocation_type: str, epsilon: float = 1.0, available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),), random_seed: int | None = None) -> Tuple[str, SpareCapacityGreedyInput, Dict[Tuple[int, int], Tuple[nx.DiGraph, nx.MultiDiGraph]]]:
+def solve_mcf_for_exp(
+    graph: HuGraphForExps, 
+    allocation_type: str, 
+    epsilon: float = 1.0, 
+    available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),), 
+    random_seed: int | None = None
+) -> Tuple[str, SpareCapacityGreedyInput, Dict[EdgeKey, RemainingNetwork], Dict[EdgeKey, int]]:
     route_result, demands, solved, multidigraph = graph.solve_mcf()
-    remaining_networks = get_remaining_networks(multidigraph, route_result, demands)
+    remaining_networks, volume_to_reroute_by_edge = get_remaining_networks_and_volume_to_reroute(multidigraph, route_result, demands)
     input_for_allocate_spare_capacity_algorithm = convert_to_greedy_input(multidigraph, demands, route_result, epsilon, available_volumes, random_seed)
-    return allocation_type, input_for_allocate_spare_capacity_algorithm, remaining_networks
+    return allocation_type, input_for_allocate_spare_capacity_algorithm, remaining_networks, volume_to_reroute_by_edge
 
 
 # функция для решения max concurrent flow на остаточной сети (gamma) для параллельного расчета в рамках основного эксперимента
 
-def solve_mcfp_wrapper(edge: Tuple[int, int], network: Tuple[nx.DiGraph, nx.MultiDiGraph]) -> Tuple[Tuple[int, int], float | None]:
+def solve_mcfp_wrapper(
+    edge: EdgeKey, 
+    network: RemainingNetwork
+) -> EdgeWithParameter:
     graph, demands_graph = network
     Graph = HuGraphForExps(graph, demands_graph)
     demands_laplacian = Graph.demands_laplacian
@@ -117,8 +146,11 @@ def solve_mcfp_wrapper(edge: Tuple[int, int], network: Tuple[nx.DiGraph, nx.Mult
 
 # функция для решения перераспределения трафика - в решении наш алгоритм
 
-def allocate_spare_capacity(input_for_algorithm: SpareCapacityGreedyInput, allocation_type: str) -> Tuple[str, Tuple[int, float]]:
+def allocate_spare_capacity(
+    input_for_algorithm: SpareCapacityGreedyInput, 
+    allocation_type: str
+) -> AllocationResult:
     output_of_algorithm = run_greedy_spare_capacity_allocation(input_for_algorithm)
-    allocation_results = convert_greedy_output_for_exp(output_of_algorithm)
-    return (allocation_type, allocation_results)
+    allocation_result = convert_greedy_output_for_exp(output_of_algorithm)
+    return allocation_type, allocation_result
     
