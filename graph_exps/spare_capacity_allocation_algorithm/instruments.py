@@ -123,6 +123,8 @@ def preprocess_instance(input_data: SpareCapacityGreedyInput) -> PreprocessedIns
 
     return PreprocessedInstance(
         graph=graph,
+        epsilon=input_data.epsilon,
+        available_volumes=input_data.available_volumes,
         indexes_by_agg_index=indexes_by_agg_index,
         edge_key_by_index=edge_key_by_index,
         capacity_by_edge=capacity_by_edge,
@@ -185,6 +187,8 @@ def make_weight1(
     return weight
 
 def create_proper_networkx_weight(weight_func: Callable[[Node, Node, int, Mapping[str, Any]], Optional[int]]) -> Callable[[Node, Node, Mapping[str, Any]], Optional[int]]:
+    """Create a wrapper for a weight fucntion for a multigraph case
+    """
     def wrapper(u, v, attrs_dict):
         min_weight = float('inf')
         
