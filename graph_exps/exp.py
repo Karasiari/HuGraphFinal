@@ -97,7 +97,7 @@ def allocation_test(
     graphs: Dict[str, HuGraphForExps], 
     tries_for_allocation: int,
     epsilon: float = 1.0,
-    available_values: Tuple[Tuple[int, float], ...] = ((1, 1.0),),
+    available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),),
     random_seed: int | None = None,
     n_jobs=-1
 ) -> Tuple[List[AllocationResult], 
@@ -114,7 +114,7 @@ def allocation_test(
           graphs - словарь расширенных графов по типу распределения ресурсов
           tries_for_allocation - количество запусков жадного алгоритма spare capacity allocation
           epsilon - scaling параметр для алгоритма перепрокладки для резервирования дополнительных запросов
-          available_values - распределение возможных весов резервных запросов в алгоритме перепрокладки 
+          available_volumes - распределение возможных весов резервных запросов в алгоритме перепрокладки 
                              как кортеж кортежей вида (значение, вероятность)
           n_jobs
     Output:
@@ -126,9 +126,9 @@ def allocation_test(
     tasks_for_mcf = []
     for allocation_type, graph in graphs.items():
       graph_copy = graph.copy()
-      tasks_for_mcf.append((graph_copy, allocation_type, epsilon, available_values))
+      tasks_for_mcf.append((graph_copy, allocation_type, epsilon, available_volumes))
     mcf_results = Parallel(n_jobs=n_jobs)(
-       delayed(solve_mcf_for_exp)(graph, allocation_type, epsilon, available_values)
+       delayed(solve_mcf_for_exp)(graph, allocation_type, epsilon, available_volumes)
        for graph, allocation_type, epsilon, available_values in tqdm(tasks_for_mcf, desc="Solving initial MCF", total=len(tasks_for_mcf))
     )
 
@@ -201,7 +201,7 @@ def expand_test_for_graph(
     allocation_types: List[str], 
     tries_for_allocation: int,
     epsilon: float = 1.0,
-    available_values: Tuple[Tuple[int, float], ...] = ((1, 1.0),),
+    available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),),
     random_seed: int | None = None
 ) -> pd.DataFrame:
     """
@@ -212,7 +212,7 @@ def expand_test_for_graph(
           allocation_types - список типов распределения ресурсов
           tries_for_allocation - количество запусков алгоритма перепрокладки распределенных ресурсов
           epsilon - scaling параметр для алгоритма перепрокладки для резервирования дополнительных запросов
-          available_values - распределение возможных весов резервных запросов в алгоритме перепрокладки 
+          available_volumes - распределение возможных весов резервных запросов в алгоритме перепрокладки 
                              как кортеж кортежей вида (значение, вероятность)
     Output:
           табличка с результатами эксперимента как pandas DataFrame
@@ -228,7 +228,7 @@ def expand_test_for_graph(
         expanded_graphs[allocation_type] = expanded_graph.copy()
 
     # проводим эксперимент на расширенных графах
-    allocation_results_raw = allocation_test(expanded_graphs, tries_for_allocation, epsilon, available_values, random_seed)
+    allocation_results_raw = allocation_test(expanded_graphs, tries_for_allocation, epsilon, available_volumes, random_seed)
 
     # получаем нужный формат output
     allocation_results = get_right_output(allocation_results_raw)
