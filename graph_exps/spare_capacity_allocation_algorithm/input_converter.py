@@ -105,7 +105,7 @@ def convert_to_greedy_input(
     demands: Dict[int, Tuple[int, int, int]],
     route_result: Dict[int, List[Tuple[int, int, int]]],
     epsilon: float = 1.0,
-    available_volumes: Tuple[VolumeWithProbabilty, ...] = ((1, 1.0),)
+    available_volumes: Tuple[VolumeWithProbabilty, ...] = ((1, 1.0),),
     random_seed: int | None = None,
 ) -> SpareCapacityGreedyInput:
     """Convert topology multigraph (graph) and the result of solving MCF problem (route_result) into SpareCapacityGreedyInput.
