@@ -11,6 +11,7 @@ Node = Hashable
 EdgeKey = Tuple[Node, Node, int]
 OrientedEdge = Tuple[Node, Node, int]
 EdgePath = List[OrientedEdge]
+VolumeWithProbabilty = Tuple[int, float]
 
 @dataclass(frozen=True, slots=True)
 class EdgeInput:
@@ -52,7 +53,7 @@ class SpareCapacityGreedyInput:
     edges: Sequence[EdgeInput]
     demands: Sequence[DemandInput]
     epsilon: float = 1.0
-    available_volumes: Tuple[int, ...] = (1,)
+    available_volumes: Tuple[VolumeWithProbabilty, ...] = ((1, 1.0),)
     random_seed: Optional[int] = None
 
 
@@ -131,7 +132,7 @@ class PreprocessedInstance:
     """Problem instance transformed to edge-indexed structures for fast access."""
     graph: nx.MultiDiGraph
     epsilon: float = 1.0
-    available_volumes: Tuple[int, ...] = (1,)
+    available_volumes: Tuple[VolumeWithProbabilty, ...] = ((1, 1.0),)
     indexes_by_agg_index: Dict[int, List[int]]
     edge_key_by_index: List[EdgeKey]
     capacity_by_edge: List[int]
