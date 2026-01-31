@@ -137,14 +137,14 @@ def preprocess_instance(input_data: SpareCapacityGreedyInput) -> PreprocessedIns
 
     return PreprocessedInstance(
         graph=graph,
-        epsilon=epsilon,
-        available_volumes=available_volumes,
         indexes_by_agg_index=indexes_by_agg_index,
         edge_key_by_index=edge_key_by_index,
         capacity_by_edge=capacity_by_edge,
         slack_by_edge=slack_by_edge,
         demands_by_id=demands_by_id,
         demands_using_edge=demands_using_edge,
+        epsilon=epsilon,
+        available_volumes=available_volumes
     )
 
 
