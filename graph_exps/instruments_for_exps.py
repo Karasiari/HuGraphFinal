@@ -4,7 +4,6 @@ import networkx as nx
 import numpy as np
 
 from .core import HuGraphForExps
-from .mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
 
 # алиасы для читаемости outputов
 EdgeWithParameter = Tuple[Tuple[int, int], float | None]
@@ -14,10 +13,23 @@ RouteResult = Dict[int, List[Tuple[int, int, int]]]
 DemandsDict = Dict[int, Tuple[int, int, int]]
 RemainingNetwork = Tuple[nx.DiGraph, nx.MultiDiGraph]
 
-from .spare_capacity_allocation_algorithm.classes_for_algorithm import SpareCapacityGreedyInput # импорт класса под нужный input в алгоритм перепрокладки
-from .spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input # импорт функции для преобразования данных под алгоритм перераспределения трафика
-from .spare_capacity_allocation_algorithm.main_algorithm import run_greedy_spare_capacity_allocation # импорт основной функции алгоритма перепрокладки
-from .spare_capacity_allocation_algorithm.output_converter import convert_greedy_output_for_exp # импорт функции для преобразования результата алгоритма перепрокладки под наш эксперимент
+# импорты для solve_mcfp_for_exp
+from .mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
+from .instruments import aggregate_graph
+from .instruments import get_laplacian
+
+
+# импорт класса под нужный input в алгоритм перепрокладки
+from .spare_capacity_allocation_algorithm.classes_for_algorithm import SpareCapacityGreedyInput
+
+# импорт функции для преобразования данных под алгоритм перераспределения трафика
+from .spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input
+
+# импорт основной функции алгоритма перепрокладки
+from .spare_capacity_allocation_algorithm.main_algorithm import run_greedy_spare_capacity_allocation
+
+# импорт функции для преобразования результата алгоритма перепрокладки под наш эксперимент
+from .spare_capacity_allocation_algorithm.output_converter import convert_greedy_output_for_exp
 
 # ----------------------------------------------------------------------------------
 # вспомогательные функции для основного экспа - для расчетов, параллелизаций и проч.
@@ -104,7 +116,7 @@ def get_remaining_networks_and_volume_to_reroute(
                 edges[edge_oriented] += capacity
         for edge_oriented, capacity in edges.items():
             if edge_oriented not in (edge_unoriented, edge_reversed):
-                edges_list.append((edge_oriented[0], edge_oriented[1], {"capacity": capacity}))
+                edges_list.append((edge_oriented[0], edge_oriented[1], {"weight": capacity}))
         slack_graph.add_edges_from(edges_list)
         slack_demands_graph.add_edges_from(affected_demands)
         remaining_networks[edge_unoriented] = (slack_graph, slack_demands_graph)
@@ -129,16 +141,15 @@ def solve_mcf_for_exp(
 
 # функция для решения max concurrent flow на остаточной сети (gamma) для параллельного расчета в рамках основного эксперимента
 
-def solve_mcfp_wrapper(
+def solve_mcfp_for_exp(
     edge: EdgeKey, 
     network: RemainingNetwork
 ) -> EdgeWithParameter:
     graph, demands_graph = network
-    Graph = HuGraphForExps(graph, demands_graph)
-    demands_laplacian = Graph.demands_laplacian
+    demands_laplacian = get_laplacian(aggregate_graph(demands_graph, weight_name='weight'))
     if not np.any(demands_laplacian):
      return edge, float('inf')
-    gamma = solve_max_concurrent_flow_problem(graph, demands_laplacian, solver_flag=False, break_flag=True, weight_name='capacity')
+    gamma = solve_max_concurrent_flow_problem(graph, demands_laplacian, solver_flag=False, break_flag=True)
     return edge, gamma
 
 
