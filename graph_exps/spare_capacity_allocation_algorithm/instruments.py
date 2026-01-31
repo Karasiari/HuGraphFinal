@@ -205,7 +205,7 @@ def create_proper_networkx_weight(weight_func: Callable[[Node, Node, int, Mappin
 def find_backup_path_nodes(
     instance: PreprocessedInstance,
     scenario: FailureScenarioState,
-    demand: ProcessedDemand,
+    demand: ProcessedDemand | AdditionalDemand,
 ) -> List[EdgeKey]:
     """Compute the demand's backup path as an edge sequence.
 
@@ -292,7 +292,7 @@ def find_backup_path_nodes(
 def apply_backup_routing(
     instance: PreprocessedInstance,
     scenario: FailureScenarioState,
-    demand: ProcessedDemand,
+    demand: ProcessedDemand | AdditionalDemand,
     backup_path_edges: Sequence[EdgeKey],
 ) -> None:
     """Apply the chosen backup route: update global add and per-scenario routed volume."""
