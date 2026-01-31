@@ -121,10 +121,24 @@ def preprocess_instance(input_data: SpareCapacityGreedyInput) -> PreprocessedIns
             )
         slack_by_edge.append(slack)
 
+    epsilon = input_data.epsilon
+    if epsilon < 1.0:
+        raise ValueError(f"Value {epsilon} for scaling parameter epsilon must be >= 1.")
+    available_volumes = input_data.available_volumes
+    summed_probability = 0
+    for volume_value, volume_probability in available_volumes:
+        if not (type(volume_value) is int):
+            raise ValueError(f"Available volume values for demands must be int.")
+        if volume_probability > 1.0 or volume_probability < 0.0:
+            raise ValueError(f"Available volume probabilities for demands must be between 0 and 1.")
+        summed_probability += volume_probability
+    if summed_probability > 1.0:
+        raise ValueError(f"Available volume probabilities for demands not summing to 1.")
+
     return PreprocessedInstance(
         graph=graph,
-        epsilon=input_data.epsilon,
-        available_volumes=input_data.available_volumes,
+        epsilon=epsilon,
+        available_volumes=available_volumes,
         indexes_by_agg_index=indexes_by_agg_index,
         edge_key_by_index=edge_key_by_index,
         capacity_by_edge=capacity_by_edge,
@@ -137,6 +151,37 @@ def preprocess_instance(input_data: SpareCapacityGreedyInput) -> PreprocessedIns
 # ----------------------------
 # Scenario utilities
 # ----------------------------
+
+def add_demands(
+    affected_demands_ids: Sequence[DemandID],
+    demands_by_id: Mapping[DemandID, ProcessedDemand],
+    epsilon: float,
+    available_volumes: Tuple[VolumeWithProbabilty, ...]
+) -> List[AdditionalDemand]:
+    """Create additional demands to reroute using 
+    scaling parameter epsilon (for aggregated affected demands by source-target)
+    and 
+    available_volumes sequence to 
+    discretize back scaled aggregated affected demands
+    and create additional demands.
+    """
+    demands_aggregated: Dict[Tuple[Node, Node], int] = {}
+    additional_demands: List[AdditionalDemand] = []
+    
+    for demand_id in affected_demands_ids:
+        demand = demands_by_id[demand_id]
+        demand_key = (demand.source, demand.target)
+        if demands_aggregated.get(demand_key, False):
+            demands_aggregated[demand_key] += demand.volume
+        else:
+            demands_aggregated[demand_key] = demand.volume
+
+     for demand_key, volume in demands_aggregated.items():
+         volume_scaled = int(round(volume * epsilon))
+         add_volume = volume_scaled - volume
+
+     return additional_demands
+    
 
 def compute_leftover_space(
     leftover: PositiveTouchedArray,
