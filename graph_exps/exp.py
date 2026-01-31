@@ -95,7 +95,9 @@ def expand_network_for_type(
 
 def allocation_test(
     graphs: Dict[str, HuGraphForExps], 
-    tries_for_allocation: int, 
+    tries_for_allocation: int,
+    epsilon: float = 1.0,
+    available_values: Tuple[Tuple[int, float], ...] = ((1, 1.0),)
     n_jobs=-1
 ) -> Tuple[List[AllocationResult], 
            Dict[str, List[EdgeWithParameter]]]:
@@ -110,6 +112,9 @@ def allocation_test(
     Input:
           graphs - словарь расширенных графов по типу распределения ресурсов
           tries_for_allocation - количество запусков жадного алгоритма spare capacity allocation
+          epsilon - scaling параметр для алгоритма перепрокладки для резервирования дополнительных запросов
+          available_values - распределение возможных весов резервных запросов в алгоритме перепрокладки 
+                             как кортеж кортежей вида (значение, вероятность)
           n_jobs
     Output:
           algorithm_results - результаты решений задачи перепрокладки
@@ -120,10 +125,10 @@ def allocation_test(
     tasks_for_mcf = []
     for allocation_type, graph in graphs.items():
       graph_copy = graph.copy()
-      tasks_for_mcf.append((graph_copy, allocation_type))
+      tasks_for_mcf.append((graph_copy, allocation_type, epsilon, available_values))
     mcf_results = Parallel(n_jobs=n_jobs)(
-       delayed(solve_mcf_for_exp)(graph, allocation_type)
-       for graph, allocation_type in tqdm(tasks_for_mcf, desc="Solving initial MCF", total=len(tasks_for_mcf))
+       delayed(solve_mcf_for_exp)(graph, allocation_type, epsilon, available_values)
+       for graph, allocation_type, epsilon, available_values in tqdm(tasks_for_mcf, desc="Solving initial MCF", total=len(tasks_for_mcf))
     )
 
     # параллельно считаем gamma для остаточных сетей
@@ -193,7 +198,9 @@ def expand_test_for_graph(
     graph: HuGraphForExps, 
     additional_resources: List[float], 
     allocation_types: List[str], 
-    tries_for_allocation: int
+    tries_for_allocation: int,
+    epsilon: float = 1.0,
+    available_values: Tuple[Tuple[int, float], ...] = ((1, 1.0),)
 ) -> pd.DataFrame:
     """
     Функция для проведения основного эксперимента по расширению на одном графе
@@ -202,6 +209,9 @@ def expand_test_for_graph(
           additional_resources - список новых ресурсов как список capacity
           allocation_types - список типов распределения ресурсов
           tries_for_allocation - количество запусков алгоритма перепрокладки распределенных ресурсов
+          epsilon - scaling параметр для алгоритма перепрокладки для резервирования дополнительных запросов
+          available_values - распределение возможных весов резервных запросов в алгоритме перепрокладки 
+                             как кортеж кортежей вида (значение, вероятность)
     Output:
           табличка с результатами эксперимента как pandas DataFrame
     """
@@ -216,7 +226,7 @@ def expand_test_for_graph(
         expanded_graphs[allocation_type] = expanded_graph.copy()
 
     # проводим эксперимент на расширенных графах
-    allocation_results_raw = allocation_test(expanded_graphs, tries_for_allocation)
+    allocation_results_raw = allocation_test(expanded_graphs, tries_for_allocation, epsilon, available_values)
 
     # получаем нужный формат output
     allocation_results = get_right_output(allocation_results_raw)
