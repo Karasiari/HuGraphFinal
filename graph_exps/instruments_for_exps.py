@@ -10,8 +10,8 @@ from .mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
 EdgeWithParameter = Tuple[Tuple[int, int], float | None]
 AllocationResult = Tuple[str, Tuple[bool, float]]
 EdgeKey = Tuple[int, int]
-RouteResult: Dict[int, List[Tuple[int, int, int]]]
-DemandsDict: Dict[int, Tuple[int, int, int]]
+RouteResult = Dict[int, List[Tuple[int, int, int]]]
+DemandsDict = Dict[int, Tuple[int, int, int]]
 RemainingNetwork = Tuple[nx.DiGraph, nx.MultiDiGraph]
 
 from .spare_capacity_allocation_algorithm.classes_for_algorithm import SpareCapacityGreedyInput # импорт класса под нужный input в алгоритм перепрокладки
