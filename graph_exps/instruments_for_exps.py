@@ -96,10 +96,10 @@ def get_remaining_networks(graph: nx.MultiDiGraph, route_result: Dict[int, List[
 
 # отдельная функция для предварительного решения MCF в рамках эксперимента
 
-def solve_mcf_for_exp(graph: HuGraphForExps, allocation_type: str, epsilon: float = 1.0, available_values: Tuple[Tuple[int, float], ...] = ((1, 1.0),), random_seed: int | None = None) -> Tuple[str, SpareCapacityGreedyInput, Dict[Tuple[int, int], Tuple[nx.DiGraph, nx.MultiDiGraph]]]:
+def solve_mcf_for_exp(graph: HuGraphForExps, allocation_type: str, epsilon: float = 1.0, available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),), random_seed: int | None = None) -> Tuple[str, SpareCapacityGreedyInput, Dict[Tuple[int, int], Tuple[nx.DiGraph, nx.MultiDiGraph]]]:
     route_result, demands, solved, multidigraph = graph.solve_mcf()
     remaining_networks = get_remaining_networks(multidigraph, route_result, demands)
-    input_for_allocate_spare_capacity_algorithm = convert_to_greedy_input(multidigraph, demands, route_result, epsilon, available_values, random_seed)
+    input_for_allocate_spare_capacity_algorithm = convert_to_greedy_input(multidigraph, demands, route_result, epsilon, available_volumes, random_seed)
     return allocation_type, input_for_allocate_spare_capacity_algorithm, remaining_networks
 
 
