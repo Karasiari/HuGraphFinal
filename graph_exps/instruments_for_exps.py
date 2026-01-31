@@ -14,7 +14,7 @@ DemandsDict = Dict[int, Tuple[int, int, int]]
 RemainingNetwork = Tuple[nx.DiGraph, nx.MultiDiGraph]
 
 # импорты для solve_mcfp_for_exp
-from .mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
+from .HuGraphForExps.mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
 from .HuGraphForExps.instruments import aggregate_graph
 from .HuGraphForExps.instruments import get_laplacian
 
