@@ -180,6 +180,7 @@ def add_demands(
 
     available_volume_values = sorted([value for value, probability in available_volumes])
     for demand_key, volume in demands_aggregated.items():
+        source, target = demand_key
         volume_scaled = int(round(volume * epsilon))
         add_volume = volume_scaled - volume
         while add_volume > 0:
