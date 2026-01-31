@@ -45,10 +45,13 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         affected_demands = []
         for failed_edges_idx in failed_edges_indices:
             affected_demands += list(instance.demands_using_edge[failed_edges_idx])
-        rng.shuffle(affected_demands)
+        additional_demands = add_demands(affected_demands, instance.demands_by_id, instance.epsilon, instance.available_volumes)
 
         routed.clear()
         compute_leftover_space(leftover, affected_demands, instance.demands_by_id)
+
+        affected_demands += additional_demands
+        rng.shuffle(affected_demands)
 
         if not algorithm_failure_flag:
             scenario = FailureScenarioState(
@@ -62,7 +65,10 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
 
             demand_to_backup_path: Dict[DemandID, EdgePath] = {}
             for demand_id in affected_demands:
-                demand = instance.demands_by_id[demand_id]
+                if type(demand_id) is AdditionalDemand:
+                    demand = demand_id
+                else:
+                    demand = instance.demands_by_id[demand_id]
                 try:
                     backup_edges = find_backup_path_nodes(instance, scenario, demand)
                 except ValueError:
@@ -73,7 +79,7 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
                 except ValueError:
                     algorithm_failure_flag = True
                     break
-                demand_to_backup_path[demand_id] = backup_edges
+                demand_to_backup_path[demand.demand_id] = backup_edges
                 successfully_rerouted_demands_volume += demand.volume
 
             failed_edge_key = instance.edge_key_by_index[instance.indexes_by_agg_index[failed_agg_edge_idx][0]]
