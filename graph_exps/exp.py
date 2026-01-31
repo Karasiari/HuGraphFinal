@@ -8,7 +8,7 @@ import pickle
 from tqdm.auto import tqdm
 from joblib import Parallel, delayed
 
-from .core import HuGraphForExps
+from .HuGraphForExps.core import HuGraphForExps
 from .instruments_for_exps import * # импорт вспомогательных функций
 
 # алиасы для читаемости outputов
