@@ -44,6 +44,7 @@ class AdditionalDemand:
     target: Node
     volume: int
 
+
 @dataclass(frozen=True, slots=True)
 class SpareCapacityGreedyInput:
     """Complete input for the greedy spare-capacity allocation algorithm."""
