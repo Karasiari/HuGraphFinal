@@ -165,6 +165,8 @@ def add_demands(
     discretize back scaled aggregated affected demands
     and create additional demands.
     """
+    import bisect
+    draw = lambda probs: random.choices(*zip(*probs), k=1)[0]
     demands_aggregated: Dict[Tuple[Node, Node], int] = {}
     additional_demands: List[AdditionalDemand] = []
     
@@ -176,9 +178,22 @@ def add_demands(
         else:
             demands_aggregated[demand_key] = demand.volume
 
+     available_volume_values = sorted([value for value, probability in available_volumes])
      for demand_key, volume in demands_aggregated.items():
          volume_scaled = int(round(volume * epsilon))
          add_volume = volume_scaled - volume
+         while add_volume > 0:
+             drawed_volume = draw(available_volumes)
+             while drawed_volume > add_volume:
+                 pos = bisect.bisect_left(available_volume_values, add_volume)
+                 if pos == 0:
+                     add_volume = 0
+                     break
+                 drawed_volume = available_volume_values[pos-1]
+                 break
+             if add_volume > 0:
+                 additional_demands.append(AdditionalDemand(source, target, drawed_volume))
+                 add_volume -= drawed_volume
 
      return additional_demands
     
