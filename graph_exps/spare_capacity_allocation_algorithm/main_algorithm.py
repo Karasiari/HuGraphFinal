@@ -50,8 +50,9 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
         routed.clear()
         compute_leftover_space(leftover, affected_demands, instance.demands_by_id)
 
-        affected_demands += additional_demands
         rng.shuffle(affected_demands)
+        rng.shuffle(additional_demands)
+        affected_demands += additional_demands
 
         if not algorithm_failure_flag:
             scenario = FailureScenarioState(
