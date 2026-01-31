@@ -3,7 +3,7 @@ from typing import Dict, Tuple, List
 import networkx as nx
 import numpy as np
 
-from .core import HuGraphForExps
+from .HuGraphForExps.core import HuGraphForExps
 
 # алиасы для читаемости outputов
 EdgeWithParameter = Tuple[Tuple[int, int], float | None]
@@ -15,8 +15,8 @@ RemainingNetwork = Tuple[nx.DiGraph, nx.MultiDiGraph]
 
 # импорты для solve_mcfp_for_exp
 from .mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
-from .instruments import aggregate_graph
-from .instruments import get_laplacian
+from .HuGraphForExps.instruments import aggregate_graph
+from .HuGraphForExps.instruments import get_laplacian
 
 
 # импорт класса под нужный input в алгоритм перепрокладки
