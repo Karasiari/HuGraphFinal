@@ -97,7 +97,8 @@ def allocation_test(
     graphs: Dict[str, HuGraphForExps], 
     tries_for_allocation: int,
     epsilon: float = 1.0,
-    available_values: Tuple[Tuple[int, float], ...] = ((1, 1.0),)
+    available_values: Tuple[Tuple[int, float], ...] = ((1, 1.0),),
+    random_seed: int | None = None,
     n_jobs=-1
 ) -> Tuple[List[AllocationResult], 
            Dict[str, List[EdgeWithParameter]]]:
@@ -200,7 +201,8 @@ def expand_test_for_graph(
     allocation_types: List[str], 
     tries_for_allocation: int,
     epsilon: float = 1.0,
-    available_values: Tuple[Tuple[int, float], ...] = ((1, 1.0),)
+    available_values: Tuple[Tuple[int, float], ...] = ((1, 1.0),),
+    random_seed: int | None = None
 ) -> pd.DataFrame:
     """
     Функция для проведения основного эксперимента по расширению на одном графе
@@ -226,7 +228,7 @@ def expand_test_for_graph(
         expanded_graphs[allocation_type] = expanded_graph.copy()
 
     # проводим эксперимент на расширенных графах
-    allocation_results_raw = allocation_test(expanded_graphs, tries_for_allocation, epsilon, available_values)
+    allocation_results_raw = allocation_test(expanded_graphs, tries_for_allocation, epsilon, available_values, random_seed)
 
     # получаем нужный формат output
     allocation_results = get_right_output(allocation_results_raw)
