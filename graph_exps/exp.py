@@ -16,7 +16,7 @@ EdgeWithParameter = Tuple[Tuple[int, int], float | None]
 AllocationResult = Tuple[str, Tuple[bool, float]]
                                                                                                 
 
-# функция для параллелизованного расчета метрики α для ВСЕХ ребер графа
+# функция для расчета метрики α для ВСЕХ ребер графа
 
 def compute_alpha_for_all_edges(
     graph: HuGraphForExps, 
