@@ -1,19 +1,13 @@
 """Convert SpareCapacityGreedyOutput into data format needed for main test"""
 
-from typing import Dict, Tuple, List
-import networkx as nx
+from typing import Tuple
 
 from .classes_for_algorithm import (
-    DemandID,
-    EdgeKey,
-    EdgePath,
-    OrientedEdge,
-    Node,
     SpareCapacityGreedyOutput
 )
 
 def convert_greedy_output_for_exp(SpareCapacityGreedyOutput) -> Tuple[bool, float]:
-    algorithm_failure_flag = SpareCapacityGreedyOutput.algorithm_failure_flag
+    algorithm_solved_flag = not SpareCapacityGreedyOutput.algorithm_failure_flag
     successfully_rerouted_demands_volume = SpareCapacityGreedyOutput.successfully_rerouted_demands_volume
     
-    return (not algorithm_failure_flag, successfully_rerouted_demands_volume)#, SpareCapacityGreedyOutput.reserve_paths_by_failed_edge)
+    return (algorithm_solved_flag, successfully_rerouted_demands_volume)
