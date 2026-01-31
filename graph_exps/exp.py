@@ -10,15 +10,25 @@ from joblib import Parallel, delayed
 
 from .core import HuGraphForExps
 from .instruments_for_exps import * # импорт вспомогательных функций
+
+# алиасы для читаемости outputов
+EdgeWithParameter = Tuple[Tuple[int, int], float | None]
+AllocationResult = Tuple[str, Tuple[bool, float]]
                                                                                                 
 
 # функция для параллелизованного расчета метрики α для ВСЕХ ребер графа
 
-def compute_alpha_for_all_edges(graph: HuGraphForExps, n_jobs=-1) -> List[Tuple[Tuple[int, int], float]]:
+def compute_alpha_for_all_edges(
+    graph: HuGraphForExps, 
+    n_jobs=-1
+) -> List[EdgeWithParameter]:
     """
     Рассчитывает с параллелизацией процесса метрику α для ВСЕХ ребер графа - для дальнейшего предпочтительного по метрике распределения новых ресурсов в эксперименте
-    Input: граф-объект класса HuGraphsExps, n_jobs
-    Output: Список ребер в виде ((source, target), значение α)
+    Input: 
+          graph - граф-объект класса HuGraphsExps, 
+          n_jobs
+    Output: 
+          Список ребер в виде EdgeWithParameter
     """
     # Проверка, что граф сериализуем
     try:
@@ -38,7 +48,22 @@ def compute_alpha_for_all_edges(graph: HuGraphForExps, n_jobs=-1) -> List[Tuple[
 
 # функция для расширения сети
 
-def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple[Tuple[int, int], float]], resources_to_add: List[float], allocation_type: str) -> HuGraphForExps:
+def expand_network_for_type(
+    graph: HuGraphForExps, 
+    edges_with_alphas: List[EdgeWithParameter], 
+    resources_to_add: List[int], 
+    allocation_type: str
+) -> HuGraphForExps:
+    """
+    Создает расширенный новыми ресурсами граф по типу распределения ресурсов
+    Input: 
+           graph - граф для расширения,
+           edges_with_alphas - список всех ребер с расчитанной метрикой α,
+           resources_to_add - список новых ресурсов как список capacity
+           allocation_type - тип распределения ресурсов
+    Output:
+           расширенный граф
+    """
     number_of_new_resources = len(resources_to_add)
     # добавляем новые ресурсы предпочтительно по значению метрики α ребра
     if allocation_type == "alpha":
@@ -67,7 +92,31 @@ def expand_network_for_type(graph: HuGraphForExps, edges_with_alphas: List[Tuple
     return expanded_graph
 
 # функция для теста на перепрокладку при падении ребер
-def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int, n_jobs=-1) -> Tuple[List[Tuple[str, Tuple[bool, float]]], Dict[str, Tuple[Tuple[int, int], float | None]]]:
+
+def allocation_test(
+    graphs: Dict[str, HuGraphForExps], 
+    tries_for_allocation: int, 
+    n_jobs=-1
+) -> Tuple[List[AllocationResult], 
+           Dict[str, List[EdgeWithParameter]]]:
+    """
+    Функция для проведения перепрокладки на уже расширенном графе:
+    1) Решает задачу MCF на расширенном графе:
+       -- Получает результаты решения
+       -- По результатам решения задачи MCF для каждого ребра рассматривает сценарий его падения и формирует остаточную сеть для этого сценария
+    2) Для каждой остаточной сети решает max concurrent flow problem - нужный нам результат gamma остаточной сети
+    3) Использует результаты решения задачи MCF для задачи перепрокладки - задача решается нашим алгоритмом spare capacity allocation
+    4) Возвращает общие результаты решений двух задач
+    Input:
+          graphs - словарь расширенных графов по типу распределения ресурсов
+          tries_for_allocation - количество запусков жадного алгоритма spare capacity allocation
+          n_jobs
+    Output:
+          algorithm_results - результаты решений задачи перепрокладки
+          remaining_networks_gammas_by_type - словарь по типу распределения ресурсов 
+                                              списков gamma остаточной сети по упавшему ребру
+    """
+    # решаем исходный MCF с помощью параллельного расчета на всех расширенных графах
     tasks_for_mcf = []
     for allocation_type, graph in graphs.items():
       graph_copy = graph.copy()
@@ -76,6 +125,8 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
        delayed(solve_mcf_for_exp)(graph, allocation_type)
        for graph, allocation_type in tqdm(tasks_for_mcf, desc="Solving initial MCF", total=len(tasks_for_mcf))
     )
+
+    # параллельно считаем gamma для остаточных сетей
     remaining_networks_gammas_by_type = {}
     for allocation_type, _, remaining_networks in mcf_results:
       remaining_networks_by_failed_edge = [(edge, remaining_network) for edge, remaining_network in remaining_networks.items()]
@@ -85,6 +136,7 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
       )
       remaining_networks_gammas_by_type[allocation_type] = remaining_networks_gammas
 
+    # параллельно запускаем алгоритм spare capacity allocation
     tasks_for_allocation = []
     for allocation_type, input_for_algorithm, _ in mcf_results:
       for try_number in range(tries_for_allocation):
@@ -96,39 +148,74 @@ def allocation_test(graphs: Dict[str, HuGraphForExps], tries_for_allocation: int
     return algorithm_results, remaining_networks_gammas_by_type
 
 # функция для получения итоговых результатов эксперимента по графу в нужном формате
-def get_right_output(allocation_results_raw: Tuple[List[Tuple[str, Tuple[bool, float]]], Dict[str, Tuple[Tuple[int, int], float | None]]]) -> pd.DataFrame:
+
+def get_right_output(
+    allocation_results_raw: Tuple[List[AllocationResult], 
+                            Dict[str, List[EdgeWithParameter]]]
+) -> pd.DataFrame:
+    """
+    По результатам эксперимента формируем табличку pandas DataFrame
+    Input:
+          allocation_results_raw 
+          - кортеж из
+          -- algorithm_results - результаты решений задачи перепрокладки
+          -- remaining_networks_gammas_by_type - словарь по типу распределения ресурсов 
+                                                 списков gamma остаточной сети по упавшему ребру
+    Output:
+          результаты в виде pandas DataFrame
+    """
     result_dict = {}
+    gammas_dict = {}
     allocation_seen = {}
-    
-    for allocation_type, allocation_result_raw in allocation_results_raw[0]:
-      result = {'allocation solved': allocation_result_raw[0], 'rerouted volume': allocation_result_raw[1]}
-      for edge, remaining_network_gamma in allocation_results_raw[1][allocation_type]:
-          result[f'gamma for failed {edge}'] = remaining_network_gamma
+    algorithm_results, remaining_networks_gammas_by_type = allocation_results_raw
+  
+    for allocation_type, remaining_networks_gammas in remaining_networks_gammas_by_type.items():
+      gammas_dict[allocation_type] = {}
+      for edge, remaining_network_gamma in remaining_networks_gammas:
+        gammas_dict[allocation_type][f'gamma for failed {edge}'] = remaining_network_gamma
+  
+    for allocation_type, result_raw in algorithm_results:
+      result = {'allocation solved': result_raw[0], 'rerouted volume': result_raw[1]}
+      result |= gammas_dict[allocation_type]
       if allocation_seen.get(allocation_type, False):
           allocation_seen[allocation_type] += 1
       else:
           allocation_seen[allocation_type] = 1
       result_dict[(allocation_type, allocation_seen[allocation_type])] = result.copy()
+    
     result_df = pd.DataFrame(result_dict).T
     return result_df
   
     
 # основная функция для эксперимента по расширению для ОДНОГО графа
 
-def expand_test_for_graph(graph: HuGraphForExps, additional_resources: List[float], allocation_types: List[str], tries_for_allocation: int) -> pd.DataFrame:
+def expand_test_for_graph(
+    graph: HuGraphForExps, 
+    additional_resources: List[float], 
+    allocation_types: List[str], 
+    tries_for_allocation: int
+) -> pd.DataFrame:
+    """
+    Функция для проведения основного эксперимента по расширению на одном графе
+    Input:
+          graph - граф для эксперимента ка объект класса HuGraphForExps
+          additional_resources - список новых ресурсов как список capacity
+          allocation_types - список типов распределения ресурсов
+          tries_for_allocation - количество запусков алгоритма перепрокладки распределенных ресурсов
+    Output:
+          табличка с результатами эксперимента как pandas DataFrame
+    """
     # рассчитываем метрику α для ребер графа
     edges_with_alphas = compute_alpha_for_all_edges(graph)
     
     # распределяем новые ресурсы согласно типу аллокации и получаем расширенные сети
     additional_resources.sort(reverse=True)
-    
     expanded_graphs = {}
     for allocation_type in allocation_types:
-        graph_copy = graph.copy()
-        expanded_graph = expand_network_for_type(graph_copy, edges_with_alphas, additional_resources, allocation_type)
+        expanded_graph = expand_network_for_type(graph, edges_with_alphas, additional_resources, allocation_type)
         expanded_graphs[allocation_type] = expanded_graph.copy()
 
-    # проводим тест на перепрокладку на расширенных графах
+    # проводим эксперимент на расширенных графах
     allocation_results_raw = allocation_test(expanded_graphs, tries_for_allocation)
 
     # получаем нужный формат output
