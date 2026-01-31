@@ -37,6 +37,14 @@ class DemandInput:
 
 
 @dataclass(frozen=True, slots=True)
+class AdditionalDemand:
+    """Class for additional demands' representation
+    """
+    source: Node
+    target: Node
+    volume: int
+
+@dataclass(frozen=True, slots=True)
 class SpareCapacityGreedyInput:
     """Complete input for the greedy spare-capacity allocation algorithm."""
     edges: Sequence[EdgeInput]
