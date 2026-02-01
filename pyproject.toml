@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "hugraphfin"
 version = "0.1.0"
-description = "Класс для тестов на adjacency-demands графах - часть проекта Hu"
+description = "Архив для тестов на adjacency-demands графах - часть проекта Hu"
 readme = "README.md"
 authors = [
     { name = "Karasiari", email = "stranwaros@gmail.com" }
