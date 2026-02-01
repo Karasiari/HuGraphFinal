@@ -6,9 +6,9 @@ import numpy as np
 from .HuGraphForExps.core import HuGraphForExps
 
 # алиасы для читаемости outputов
+EdgeKey = Tuple[int, int]
 EdgeWithParameter = Tuple[Tuple[int, int], float | None]
 AllocationResult = Tuple[str, Tuple[bool, float]]
-EdgeKey = Tuple[int, int]
 RouteResult = Dict[int, List[Tuple[int, int, int]]]
 DemandsDict = Dict[int, Tuple[int, int, int]]
 RemainingNetwork = Tuple[nx.DiGraph, nx.MultiDiGraph]
@@ -35,21 +35,32 @@ from .spare_capacity_allocation_algorithm.output_converter import convert_greedy
 # вспомогательные функции для основного экспа - для расчетов, параллелизаций и проч.
 # ----------------------------------------------------------------------------------
 
-# функция для расчета α для ребра
+# функция для расчета α для ОДНОГО ребра
 
-def compute_alpha_for_edge(graph_state, source, target):
+def compute_alpha_for_edge(
+    graph_state: bytes, 
+    source: int, 
+    target: int
+) -> EdgeWithParameter:
+    """
+    Рассчитывает метрику α для ребра - функция для параллелизованного расчета 
+    метрики на всех ребрах в exp.py
+    Input:
+          graph_state - граф-объект класса HuGraphForExps в виде bytes
+          source и target - вершины ребра
+    Output:
+          Ребро с метрикой α в виде EdgeWithParameter
+    """
     # Восстанавливаем граф из сериализованного состояния (например, pickle)
     import pickle
     graph = pickle.loads(graph_state)
     
     keys = list(graph.multigraph.get_edge_data(source, target).keys())
-    if not keys:
-        return ((source, target), float('nan'))
-    key = keys[0]
-    
-    graph.change_multiedge(source, target, "insert", key, 80)
+    for key in keys:
+        graph.change_multiedge(source, target, "delete", key)
+        
     alpha = graph.calculate_alpha()
-    return ((source, target), alpha)
+    return (source, target), alpha
     
 # функция для расширения графа
 
