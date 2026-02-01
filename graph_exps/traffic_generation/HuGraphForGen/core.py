@@ -1,0 +1,331 @@
+"""
+Базовый объект HuGraphForGen: загрузка графа из матрицы смежности,
+генерация cut-векторов, расчёт alpha (с кэшем Лапласиана demands-графа),
+и хелперы для инкрементального обновления demands-графа.
+"""
+from __future__ import annotations
+import copy
+import random
+from dataclasses import dataclass
+from typing import Optional, Iterable, Dict, Any, Tuple, List
+
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from scipy.linalg import fractional_matrix_power
+from scipy.sparse.linalg import eigsh
+
+from .data import (
+    compute_laplacian_matrix,
+    update_laplacian_on_edge_add,
+    update_laplacian_on_edge_weight_update,
+    update_laplacian_on_edge_remove,
+)
+
+class HuGraphForGen:
+    def __init__(self, adjacency_matrix: np.ndarray) -> None:
+        self.adjacency_matrix = np.array(adjacency_matrix, dtype=float)
+        self._validate_adjacency_matrix()
+        self.graph = self._create_networkx_graph()
+        self.n = self.graph.number_of_nodes()
+
+        # demands-граф и его Лапласиан (кэшируются и инкрементально обновляются)
+        self.initial_demands_graph: Optional[nx.Graph] = None
+        self.demands_graph: Optional[nx.Graph] = None
+        self.demands_laplacian: Optional[np.ndarray] = None
+
+        # последнее вычисленное alpha
+        self.alpha: Optional[float] = None
+
+        # кэши для расчёта alpha / cut
+        self.graph_pinv_sqrt: Optional[np.ndarray] = None
+        self.graph_spec: Optional[Dict[str, Any]] = None
+
+    # ---------- базовая подготовка ----------
+    def _validate_adjacency_matrix(self) -> None:
+        A = self.adjacency_matrix
+        if A.ndim != 2 or A.shape[0] != A.shape[1]:
+            raise ValueError("Матрица смежности должна быть квадратной")
+        if not np.allclose(A, A.T):
+            raise ValueError("Матрица смежности должна быть симметричной (неориентированный граф)")
+        if (A < 0).any():
+            raise ValueError("Веса рёбер должны быть неотрицательными")
+
+    def _create_networkx_graph(self) -> nx.Graph:
+        A = self.adjacency_matrix
+        n = A.shape[0]
+        G = nx.Graph()
+        G.add_nodes_from(range(n))
+        for i in range(n):
+            for j in range(i + 1, n):
+                w = A[i, j]
+                if w:
+                    G.add_edge(i, j, weight=float(w))
+        return G
+
+    # ---------- demands: init + alpha + cut ----------
+    def generate_initial_demands(
+        self,
+        p: float = 0.5,
+        distribution: str = "normal",
+        median_weight: int = 50,
+        var: int = 100,
+        seed: Optional[int] = None,
+    ) -> None:
+        if distribution != "normal":
+            raise ValueError("Пока поддерживается только distribution='normal'")
+        n = self.graph.number_of_nodes()
+        base_nodes = list(self.graph.nodes())
+        G_rand = nx.erdos_renyi_graph(n, p, seed=seed, directed=False)
+        # случайная пермутация отображения вершин
+        perm = list(range(n)); random.shuffle(perm)
+        mapping = {i: base_nodes[perm[i]] for i in G_rand.nodes()}
+        G_rand = nx.relabel_nodes(G_rand, mapping)
+        # веса ~ нормальным образом (дискретно)
+        import numpy as np
+        from scipy.stats import norm as _norm
+        def draw():
+            mu, sigma = median_weight, np.sqrt(var)
+            lo, hi = 1, 2 * median_weight
+            xs = np.arange(lo, hi + 1)
+            ps = _norm.pdf(xs, loc=mu, scale=sigma); ps /= ps.sum()
+            return int(np.random.choice(xs, p=ps))
+        Gd = nx.Graph(); Gd.add_nodes_from(base_nodes)
+        for u, v in G_rand.edges():
+            Gd.add_edge(u, v, weight=draw())
+        self.initial_demands_graph = copy.deepcopy(Gd)
+        self.demands_graph = Gd
+        self.demands_laplacian = compute_laplacian_matrix(Gd, nodelist=base_nodes)
+
+    def generate_initial_multidemands(
+        self,
+        *,
+        p: float = 0.5,
+        distribution: str = "normal",
+        median_weight: int = 50,
+        var: int = 100,
+        multi_max: int = 3,
+    ) -> None:
+        if distribution != "normal":
+            raise ValueError("Пока поддерживается только distribution='normal'")
+        import numpy as np
+
+        # подготовка графов
+        nodes = list(self.graph.nodes())
+        self.demands_multigraph = nx.MultiGraph()
+        self.demands_multigraph.add_nodes_from(nodes)
+
+        self.demands_graph = nx.Graph()
+        self.demands_graph.add_nodes_from(nodes)
+        # дискретная "нормаль" для весов без SciPy
+        mu = float(max(median_weight, 1))
+        sigma = float(np.sqrt(max(var, 1)))
+        hi = int(max(2 * mu, 2))
+        xs = np.arange(1, hi + 1, dtype=int)
+        ps = np.exp(-0.5 * ((xs - mu) / sigma) ** 2)
+        ps_sum = ps.sum()
+        ps = ps / ps_sum if ps_sum > 0 else np.ones_like(ps) / xs.size
+        
+        multi_max = int(max(1, multi_max))
+        n = len(nodes)
+        if n >= 2:
+            for i in range(n):
+                u = nodes[i]
+                for j in range(i + 1, n):
+                    v = nodes[j]
+                    if np.random.rand() <= float(p):
+                        w = int(np.random.choice(xs, p=ps))
+                        k = int(np.random.randint(1, multi_max + 1))
+                        per = int(round(w / k))
+
+                        if per <= 0:
+                            # НЕ дробим: одно мультиребро исходного веса w
+                            self.demands_multigraph.add_edge(u, v, weight=float(w))
+                            agg_w = float(w)
+                        else:
+                            # дробим на k мультирёбер веса per
+                            for _ in range(k):
+                                self.demands_multigraph.add_edge(u, v, weight=float(per))
+                                agg_w = float(k * per)
+
+                        self.demands_graph.add_edge(u, v, weight=agg_w)
+
+        # сохранить копии начального состояния
+        self.initial_demands_multigraph = self.demands_multigraph.copy()
+        self.initial_demands_graph = self.demands_graph.copy()
+        self.demands_laplacian = compute_laplacian_matrix(self.demands_graph, nodelist=nodes)
+
+    def generate_deterministic_initial_multidemands(
+        self,
+        *,
+        distribution: str = "normal",
+        median_weight: int = 50,
+        var: int = 100,
+        multi_max: int = 3,
+        demands_sum: float = 1000.0,
+    ) -> None:
+        if distribution != "normal":
+            raise ValueError("Пока поддерживается только distribution='normal'")
+
+        import math
+        import numpy as np
+        import networkx as nx
+
+        nodes = list(self.graph.nodes())
+        self.demands_multigraph = nx.MultiGraph()
+        self.demands_multigraph.add_nodes_from(nodes)
+
+        self.demands_graph = nx.Graph()
+        self.demands_graph.add_nodes_from(nodes)
+
+        # Дискретная "нормаль" без SciPy
+        mu = float(max(int(median_weight), 1))
+        sigma = float(np.sqrt(max(int(var), 1)))
+        hi = int(max(2 * mu, 2))
+        xs = np.arange(1, hi + 1, dtype=int)
+        ps = np.exp(-0.5 * ((xs - mu) / sigma) ** 2)
+        ps_sum = ps.sum()
+        ps = ps / ps_sum if ps_sum > 0 else np.ones_like(ps) / xs.size
+
+        multi_max = int(max(1, int(multi_max)))
+        n = len(nodes)
+        # Все неориентированные пары
+        iu, iv = np.triu_indices(n, k=1)
+        M = iu.size
+
+        # Кол-во пар K (гарантируется, что K < M)
+        K = int(math.ceil(2.0 * float(demands_sum) / max(mu, 1.0)))
+        K = max(1, min(K, M - 1))  # на всякий случай страхуемся (оставим < M)
+
+        # Равномерно выбираем K различных индексов пар и перемешиваем их порядок
+        chosen = np.random.choice(M, size=K, replace=False)
+        order = np.random.permutation(chosen)
+
+        demands_left = float(demands_sum)
+
+        for idx in order:
+            if demands_left <= mu:
+                break
+            
+            i, j = int(iu[idx]), int(iv[idx])
+            u, v = nodes[i], nodes[j]
+
+            # Базовый вес по дискретной "нормали"
+            w = int(np.random.choice(xs, p=ps))
+
+            # Дробление: k мультирёбер веса per; если per==0 → одно ребро веса w
+            k = int(np.random.randint(1, multi_max + 1))
+            per = int(round(w / k))
+
+            if per <= 0:
+                # НЕ дробим
+                self.demands_multigraph.add_edge(u, v, weight=float(w))
+                agg_add = float(w)
+            else:
+                for _ in range(k):
+                    self.demands_multigraph.add_edge(u, v, weight=float(per))
+                agg_add = float(k * per)
+
+            # Агрегированное ребро — сумма мультирёбер на паре
+            self.demands_graph.add_edge(u, v, weight=agg_add)
+
+            # ВЫЧИТАЕМ ИМЕННО agg_add (после округлений/дробления), а не исходный w
+            demands_left -= agg_add
+
+        # сохранить копии начального состояния
+        self.initial_demands_multigraph = self.demands_multigraph.copy()
+        self.initial_demands_graph = self.demands_graph.copy()
+        self.demands_laplacian = compute_laplacian_matrix(self.demands_graph, nodelist=nodes)
+
+
+    def _ensure_graph_pinv_sqrt(self) -> np.ndarray:
+        if self.graph_pinv_sqrt is None:
+            nodelist = list(self.graph.nodes())
+            Lg = nx.laplacian_matrix(self.graph, nodelist=nodelist, weight="weight").astype(float).toarray()
+            Lg_pinv = np.linalg.pinv(Lg)
+            self.graph_pinv_sqrt = fractional_matrix_power(Lg_pinv, 0.5)
+        return self.graph_pinv_sqrt
+
+    def calculate_alpha(self) -> float:
+        if self.demands_graph is None:
+            raise AttributeError("demands_graph не задан")
+        Ld = self.demands_laplacian
+        if Ld is None:
+            Ld = compute_laplacian_matrix(self.demands_graph, nodelist=list(self.graph.nodes()))
+            self.demands_laplacian = Ld
+        Lg_inv_sqrt = self._ensure_graph_pinv_sqrt()
+        L_alpha = Lg_inv_sqrt @ Ld @ Lg_inv_sqrt
+        # наибольший собственный
+        eig, _ = eigsh(L_alpha, k=1, which="LA")
+        lam_max = float(eig[0]) if eig.size else 0.0
+        tr = float(np.trace(L_alpha))
+        self.alpha = lam_max / tr if tr != 0.0 else float("inf")
+        return lam_max / tr if tr != 0.0 else float("inf")
+
+    def generate_cut(self, type: str = "friendly", rng_seed: Optional[int] = None) -> np.ndarray:
+        if type not in {"friendly", "adversarial"}:
+            raise ValueError("type должен быть 'friendly' или 'adversarial'")
+        if self.graph_spec is None:
+            nodelist = list(self.graph.nodes())
+            L = nx.laplacian_matrix(self.graph, nodelist=nodelist, weight="weight").astype(float).toarray()
+            vals, vecs = np.linalg.eigh(L)
+            eps = 1e-12
+            start = 1 if vals[0] <= eps else 0
+            self.graph_spec = {"eigvals": vals[start:], "eigvecs": vecs[:, start:]}
+
+        vecs = self.graph_spec["eigvecs"]
+        m = vecs.shape[1]
+        if m <= 1:
+            v = vecs[:, 0] if m == 1 else np.ones(self.n)
+            return v / (np.linalg.norm(v) or 1.0)
+        mid = m // 2
+        lower, upper = vecs[:, :mid], vecs[:, mid:] if m % 2 == 0 else vecs[:, mid + 1:]
+        part = upper if type == "friendly" else lower
+        rng = np.random.default_rng(rng_seed)
+        coeffs = np.abs(rng.normal(size=part.shape[1]))
+        v = part @ coeffs
+        nrm = np.linalg.norm(v)
+        return v / (nrm or 1.0)
+
+    # ---------- публичные хелперы для генератора ----------
+    def nodelist_and_index(self) -> Tuple[List[int], Dict[int, int]]:
+        nodes = list(self.graph.nodes())
+        return nodes, {u: i for i, u in enumerate(nodes)}
+
+    def remove_edge_by_indices(self, iu: int, iv: int) -> Optional[float]:
+        """Удаляет ребро (по индексам узлов) из demands-графа и обновляет Лапласиан. Возвращает старый вес или None."""
+        if self.demands_graph is None:
+            return None
+        nodes, _ = self.nodelist_and_index()
+        u, v = nodes[iu], nodes[iv]
+        if not self.demands_graph.has_edge(u, v):
+            return None
+        w = float(self.demands_graph[u][v]["weight"])
+        self.demands_graph.remove_edge(u, v)
+        update_laplacian_on_edge_remove(self.demands_laplacian, iu, iv, w)
+        return w
+
+    def upsert_edge_by_indices(self, iu: int, iv: int, delta_w: float) -> float:
+        """
+        Добавляет новое ребро или увеличивает вес существующего (на delta_w>0) в demands-графе.
+        Возвращает новый итоговый вес ребра.
+        """
+        if iu > iv:
+            iu, iv = iv, iu
+        nodes, _ = self.nodelist_and_index()
+        u, v = nodes[iu], nodes[iv]
+        if self.demands_graph is None:
+            self.demands_graph = nx.Graph(); self.demands_graph.add_nodes_from(nodes)
+            self.demands_laplacian = np.zeros((len(nodes), len(nodes)))
+        if self.demands_graph.has_edge(u, v):
+            old = float(self.demands_graph[u][v]["weight"])
+            new = old + float(delta_w)
+            self.demands_graph[u][v]["weight"] = new
+            update_laplacian_on_edge_weight_update(self.demands_laplacian, iu, iv, old, new)
+            return new
+        else:
+            w = float(delta_w)
+            self.demands_graph.add_edge(u, v, weight=w)
+            update_laplacian_on_edge_add(self.demands_laplacian, iu, iv, w)
+            return w
