@@ -16,7 +16,7 @@ import matplotlib as mpl
 from scipy.linalg import fractional_matrix_power
 from scipy.sparse.linalg import eigsh
 
-from .data import (
+from .instruments import (
     compute_laplacian_matrix,
     update_laplacian_on_edge_add,
     update_laplacian_on_edge_weight_update,
