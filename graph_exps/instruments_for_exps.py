@@ -106,8 +106,8 @@ def get_remaining_networks_and_volume_to_reroute(
     Output:
           Возвращает словарь остаточных сетей по EdgeKey ребра, 
           для которого остаточная сеть считается;
-          второй output - суммарный volume запросов для потенциальной перепрокладки,
-                          суммированный по ВСЕМ сценариям падения ребра
+          второй output - суммарный volume запросов для потенциальной перепрокладки
+                          для ВСЕХ сценариев падений ребер
     """
     slack_by_edge: Dict[EdgeKey, int] = {}
     demands_through_edge: Dict[EdgeKey, List[int]] = {}
