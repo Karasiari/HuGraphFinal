@@ -104,7 +104,24 @@ def make_multi_demands(
   aggregated_traffic_graph: nx.Graph, 
   available_demand_volumes: Tuple[VolumeWithProbability, ...]
 ) -> nx.MultiDiGraph:
-  return aggregated_traffic_graph
+  traffic_matrix = nx.adjacency_matrix(aggregated_traffic_graph).todense().tolist()
+  n = len(traffic_matrix)
+  G = nx.MultiDiGraph()
+  for i in range(n):
+    G.add_node(i)
+  for i in range(n):
+    for j in range(n):
+      weight = traffic_matrix[i][j]
+      if isinstance(weight, (int, np.integer)):
+        int_weight = int(weight)
+      else:
+        int_weight = int(round(float(weight)))
+        for _ in range(int_weight):
+          if random.random() < 0.5:
+            G.add_edge(i, j, weight=1)
+          else:
+            G.add_edge(j, i, weight=1)
+  return G
   
 
 # основная функция для генерации своего трафика
