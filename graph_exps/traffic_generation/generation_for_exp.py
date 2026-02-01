@@ -6,6 +6,9 @@ import networkx as nx
 from .params_for_generation import check_params
 
 from .HuGraphForGen.core import HuGraphForGen
+from .HuGraphForGen.generation.generator_with_gravity import GravitationalGenerator
+from .HuGraphForGen.generation.generator import GeneratorMultiGraph
+from .HuGraphForGen.generation.generator_with_sa import GeneratorMultiGraphWithSA
   
 
 # алиасы для читаемости
@@ -71,7 +74,7 @@ def alpha_generation(
   graph_for_generation = HuGraphForGen(adj_matrix)
   valid_generation_params = check_params(graph_for_generation, generation_type, generation_params, recommended_params)
   
-  generator = GravitationalGenerator(**valid_generation_params)
+  generator = GeneratorMultiGraph(**valid_generation_params)
   generator.generate(graph_for_generation)
   traffic_graph = graph_for_generation.demands_graph
   return traffic_graph
@@ -85,7 +88,7 @@ def alpha_with_sa_generation(
   graph_for_generation = HuGraphForGen(adj_matrix)
   valid_generation_params = check_params(graph_for_generation, generation_type, generation_params, recommended_params)
   
-  generator = GravitationalGenerator(**valid_generation_params)
+  generator = GeneratorMultiGraphWithSA(**valid_generation_params)
   generator.generate(graph_for_generation)
   traffic_graph = graph_for_generation.demands_graph
   return traffic_graph
