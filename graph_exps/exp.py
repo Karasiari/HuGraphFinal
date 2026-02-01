@@ -10,7 +10,7 @@ from joblib import Parallel, delayed
 # импорт вспомогательных функций
 from .instruments_for_exps import *
 
-# алиасы для читаемости outputов
+# алиасы для читаемости
 EdgeWithParameter = Tuple[Tuple[int, int], float | None]
 AllocationResult = Tuple[str, Tuple[bool, float]]
                                                                                                 
