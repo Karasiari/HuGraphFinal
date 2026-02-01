@@ -2,43 +2,70 @@ beta=beta, intensity=int(3*median_capacity*graph_size), centrality='pagerank', e
 
 from typing import Dict, Any
 
+import networkx as nx
+
 GRAVITY_DEFAULTS = {
     "centrality": "pagerank", 
     "edge_mode": "dynamic", 
     "dyn_max": 1, 
     "dyn_law": "exponential"
 }
-GRAVITY_CHECKS = {
-    "beta": (0.0, 1.0),
-    "intensity": lambda x: type(x) is int,
-    "centrality": ("degree", "closeness", "harmonic_closeness", "harmonic", "pagerank"),
-    "edge_perc": (0.0, 1.0),
-    "edge_mode": ("dynamic", "static_top", "static_betascore"),
-    "dyn_max": lambda x: type(x) is float,
-    "dyn_law": ("exponential", "linear", None),
-    "dyn_k": lambda x: type(x) is float
-}
+
+def get_recommended_params(
+    graph: nx.Graph, 
+    generation_type: str
+) -> Dict[str, Any]:
+    if generation_type == "gravity":
+      recommended = 
+    elif generation_type == "alpha":
+      recommended = 
+    elif generation_type == "alpha_with_sa":
+      recommended = 
+    return recommended
+
+def get_checks(
+    generation_type: str
+) -> Dict[str, Any]:
+    if generation_type == "gravity":
+      checks = {
+          "beta": (0.0, 1.0),
+          "intensity": lambda x: type(x) is int,
+          "centrality": ("degree", "closeness", "harmonic_closeness", "harmonic", "pagerank"),
+          "edge_perc": (0.0, 1.0),
+          "edge_mode": ("dynamic", "static_top", "static_betascore"),
+          "dyn_max": lambda x: type(x) is float,
+          "dyn_law": ("exponential", "linear", None),
+          "dyn_k": lambda x: type(x) is float
+      }
+    elif generation_type == "alpha":
+      checks =
+    elif generation_type == "alpha_with_sa":
+      checks =
+    return checks
 
 def check_params(
+    graph: nx.Graph,
     generation_type: str,
-    params: Dict[str, Any]
+    params: Dict[str, Any],
+    recommended_params: bool
 ) -> Dict[str, Any]:
     """
-    Подготавливает гиперпараметры для генерации: дефолты и валидация
+    Подготавливает гиперпараметры для генерации
     Input:
+          graph - граф смежности, на котором проводится генерация 
+                  (для расчета рекомендованных параметров)
           generation_type - тип генерации
           params - переданные параметры
+          recommended_params - флаг использовать рекомендованные гиперпараметры
     Output:
           Валидированный словарь параметров
     """
-    if generation_type == "gravity":
-      defaults, checks = GRAVITY_DEFAULTS, GRAVITY_CHECKS
-    elif generation_type == "alpha":
-      defaults, checks = ALPHA_DEFAULTS, ALPHA_CHECKS
-    elif generation_type == "alpha_with_sa":
-      defaults, checks = ALPHA_WITH_SA_DEFAULTS, ALPHA_WITH_SA_CHECKS
-      
-    valid_params = {**defaults, **params}
+    recommended = get_recommended_params(graph, generation_type)
+    checks = get_checks(generation_type)
+    if recommended_params:
+        valid_params = {**params, **recommended}
+    else:
+        valid_params = params
     if checks:
         for param, check in checks.items():
             value = valid_params[param]
@@ -56,5 +83,4 @@ def check_params(
                 # Функция-валидатор
                 if not check(value):
                     raise ValueError(f"Недопустимое значение {param}: {value}")
-    
     return valid_params
