@@ -1,22 +1,26 @@
-beta=beta, intensity=int(3*median_capacity*graph_size), centrality='pagerank', edge_perc=1/graph_size, edge_mode='dynamic', dyn_max=1, dyn_law='exponential', dyn_k=dyn_k
-
 from typing import Dict, Any
 
 import networkx as nx
+import numpy as np
 
-GRAVITY_DEFAULTS = {
-    "centrality": "pagerank", 
-    "edge_mode": "dynamic", 
-    "dyn_max": 1, 
-    "dyn_law": "exponential"
-}
+from .HuGraphForGen.core import HuGraphForGen
+
 
 def get_recommended_params(
-    graph: nx.Graph, 
+    graph: HuGraphForGen, 
     generation_type: str
 ) -> Dict[str, Any]:
     if generation_type == "gravity":
-      recommended = 
+        median_capacity = np.median([data['weight'] for u, v, data in graph.graph.edges(data=True) if 'weight' in data])
+        graph_size = graph.n
+        recommended = {
+            "intensity": int(3*median_capacity*graph_size),
+            "centrality": "pagerank",
+            "edge_perc": 1/graph_size,
+            "edge_mode": "dynamic",
+            "dyn_max": 1,
+            "dyn_law": "exponential"
+        }
     elif generation_type == "alpha":
       recommended = 
     elif generation_type == "alpha_with_sa":
@@ -27,16 +31,16 @@ def get_checks(
     generation_type: str
 ) -> Dict[str, Any]:
     if generation_type == "gravity":
-      checks = {
-          "beta": (0.0, 1.0),
-          "intensity": lambda x: type(x) is int,
-          "centrality": ("degree", "closeness", "harmonic_closeness", "harmonic", "pagerank"),
-          "edge_perc": (0.0, 1.0),
-          "edge_mode": ("dynamic", "static_top", "static_betascore"),
-          "dyn_max": lambda x: type(x) is float,
-          "dyn_law": ("exponential", "linear", None),
-          "dyn_k": lambda x: type(x) is float
-      }
+        checks = {
+            "beta": (0.0, 1.0),
+            "intensity": lambda x: type(x) is int,
+            "centrality": ("degree", "closeness", "harmonic_closeness", "harmonic", "pagerank"),
+            "edge_perc": (0.0, 1.0),
+            "edge_mode": ("dynamic", "static_top", "static_betascore"),
+            "dyn_max": lambda x: type(x) is float,
+            "dyn_law": ("exponential", "linear", None),
+            "dyn_k": lambda x: type(x) is float
+        }
     elif generation_type == "alpha":
       checks =
     elif generation_type == "alpha_with_sa":
@@ -44,7 +48,7 @@ def get_checks(
     return checks
 
 def check_params(
-    graph: nx.Graph,
+    graph: HuGraphForGen,
     generation_type: str,
     params: Dict[str, Any],
     recommended_params: bool
@@ -62,13 +66,9 @@ def check_params(
     """
     recommended = get_recommended_params(graph, generation_type)
     checks = get_checks(generation_type)
-    if recommended_params:
-        valid_params = {**params, **recommended}
-    else:
-        valid_params = params
     if checks:
         for param, check in checks.items():
-            value = valid_params[param]
+            value = params[param]
             
             if isinstance(check, (list, tuple)) and len(check) == 2:
                 # Диапазон
@@ -83,4 +83,8 @@ def check_params(
                 # Функция-валидатор
                 if not check(value):
                     raise ValueError(f"Недопустимое значение {param}: {value}")
+    if recommended_params:
+        valid_params = {**params, **recommended}
+    else:
+        valid_params = params
     return valid_params
