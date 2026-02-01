@@ -34,7 +34,8 @@ def find_gcc(
 # функция для агрегации мультиграфа в обычный граф
 
 def aggregate_multigraph(
-  multigraph: nx.MultiGraph | nx.MultiDiGraph
+  multigraph: nx.MultiGraph | nx.MultiDiGraph,
+  weight_name: str
 ) -> nx.Graph:
   """
   Агрегация графа
@@ -42,7 +43,7 @@ def aggregate_multigraph(
   graph = nx.Graph()
   graph.add_nodes_from(range(multigraph.number_of_nodes()))
   for u, v, data in multigraph.edges(data=True):
-    weight = data['capacity']
+    weight = data[weight_name]
     if graph.has_edge(u, v):
       graph[u][v]['weight'] += weight
     else:
