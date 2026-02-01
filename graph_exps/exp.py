@@ -7,7 +7,8 @@ import pickle
 from tqdm.auto import tqdm
 from joblib import Parallel, delayed
 
-from .instruments_for_exps import * # импорт вспомогательных функций
+# импорт вспомогательных функций
+from .instruments_for_exps import *
 
 # алиасы для читаемости outputов
 EdgeWithParameter = Tuple[Tuple[int, int], float | None]
