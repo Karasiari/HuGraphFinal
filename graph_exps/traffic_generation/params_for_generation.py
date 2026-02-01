@@ -1,9 +1,3 @@
-epsilon=0.025,
-                               p_ER = 2/graph_size, distribution="normal", median_weight_for_initial=20, var_for_initial=1, multi_max=5,
-                               num_edges=None,
-                               initial_generation='deterministic', demands_sum=int(1.5*graph_size*20),
-
-
 from typing import Dict, Any
 
 import networkx as nx
@@ -28,9 +22,23 @@ def get_recommended_params(
             "dyn_law": "exponential"
         }
     elif generation_type == "alpha":
-      recommended = 
+        graph_size = graph.n
+        recommended = {
+            "p_ER": 2/graph_size,
+            "distribution": "normal",
+            "num_edges": None,
+            "initial_generation": "deterministic", 
+            "demands_sum": int(1.5*graph_size*20)
+        }
     elif generation_type == "alpha_with_sa":
-      recommended = 
+        graph_size = graph.n
+        recommended = {
+            "p_ER": 2/graph_size,
+            "distribution": "normal",
+            "num_edges": None,
+            "initial_generation": "deterministic", 
+            "demands_sum": int(1.5*graph_size*20)
+        }
     return recommended
 
 def get_checks(
