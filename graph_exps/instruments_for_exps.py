@@ -69,7 +69,8 @@ def expand_graph(
     source_target_sequence_to_add: List[EdgeWithParameter]
 ) -> HuGraphForExps:
     for edge, capacity in source_target_sequence_to_add:
-        graph.change_multiedge(edge[0], edge[1], type='insert', capacity=capacity)
+        source, target = edge
+        graph.change_multiedge(source, target, type='insert', capacity=capacity)
     return graph
 
 
