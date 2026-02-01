@@ -95,7 +95,16 @@ def alpha_with_sa_generation(
   traffic_graph = graph_for_generation.demands_graph
   aggregated_traffic_graph = aggregate_multigraph(traffic_graph)
   return traffic_graph
-      
+
+
+# функция для дробления сгенерированного трафика
+
+def make_multi_demands(
+  aggregated_traffic_graph: nx.Graph, 
+  available_demand_volumes: Tuple[VolumeWithProbability, ...]
+) -> nx.MultiDiGraph:
+  return aggregated_traffic_graph
+  
 
 # основная функция для генерации своего трафика
 
@@ -121,5 +130,5 @@ def generate_own_traffic(
   else:
       raise ValueError(f"Тип генерации {generation_type} не известен")
 
-  
+  traffic_graph = make_multi_demands(aggregated_traffic_graph, available_demand_volumes)
   return connected_graph, traffic_graph
