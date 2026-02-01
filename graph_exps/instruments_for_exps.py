@@ -22,7 +22,7 @@ from .HuGraphForExps.instruments import get_laplacian
 # импорт класса под нужный input в алгоритм перепрокладки
 from .spare_capacity_allocation_algorithm.classes_for_algorithm import SpareCapacityGreedyInput
 
-# импорт функции для преобразования данных под алгоритм перераспределения трафика
+# импорт функции для преобразования данных под алгоритм перепрокладки
 from .spare_capacity_allocation_algorithm.input_converter import convert_to_greedy_input
 
 # импорт основной функции алгоритма перепрокладки
@@ -36,7 +36,7 @@ from .spare_capacity_allocation_algorithm.output_converter import convert_greedy
 # ----------------------------------------------------------------------------------
 
 
-# функция для расчета α для ОДНОГО ребра
+# функция для расчета α для ОДНОГО ребра - под параллелизацию в exp.py
 
 def compute_alpha_for_edge(
     graph_state: bytes, 
@@ -169,7 +169,7 @@ def get_remaining_networks_and_volume_to_reroute(
     return remaining_networks, volume_to_reroute
     
 
-# отдельная функция для предварительного решения MCF в рамках эксперимента
+# отдельная функция для предварительного решения MCF в рамках эксперимента - под параллелизацию в exp.py
 
 def solve_mcf_for_exp(
     graph: HuGraphForExps, 
@@ -226,12 +226,21 @@ def solve_mcfp_for_exp(
     return edge, gamma
 
 
-# функция для решения перераспределения трафика - в решении наш алгоритм
+# функция для решения перераспределения трафика, в решении наш алгоритм - под параллелизацию в exp.py
 
 def allocate_spare_capacity(
     input_for_algorithm: SpareCapacityGreedyInput, 
     allocation_type: str
 ) -> AllocationResult:
+    """
+    Запускает алгоритм spare capacity allocation и получает его результаты
+    Input:
+          input_for_algorithm - input для алгоритма нужного формата SpareCapacityGreedyInput
+          allocation_type - тип расширения графа, на котором запускаем алгоритм
+                            (для удобного output)
+    Output:
+          Результаты перепрокладки в нужном формате AllocationResult
+    """
     output_of_algorithm = run_greedy_spare_capacity_allocation(input_for_algorithm)
     allocation_result = convert_greedy_output_for_exp(output_of_algorithm)
     return allocation_type, allocation_result
