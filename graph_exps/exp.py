@@ -234,8 +234,7 @@ def expand_test_for_graph(
     additional_resources.sort(reverse=True)
     expanded_graphs = {}
     for allocation_type in allocation_types:
-        graph_copy = graph.copy()
-        expanded_graph = expand_network_for_type(graph_copy, edges_with_alphas, additional_resources, allocation_type)
+        expanded_graph = expand_network_for_type(graph, edges_with_alphas, additional_resources, allocation_type)
         expanded_graphs[allocation_type] = expanded_graph.copy()
 
     # проводим эксперимент на расширенных графах
