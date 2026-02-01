@@ -57,6 +57,7 @@ def gravity_generation(
   graph_for_generation = HuGraphForGen(adj_matrix)
 
   valid_generation_params = check_params(graph_for_generation, generation_type, generation_params, recommended_params)
+  generator = GravitationalGenerator(**valid_generation_params)
 
 def alpha_generation(
   graph: nx.Graph, 
@@ -67,6 +68,7 @@ def alpha_generation(
   graph_for_generation = HuGraphForGen(adj_matrix)
 
   valid_generation_params = check_params(graph_for_generation, generation_type, generation_params, recommended_params)
+  generator = GravitationalGenerator(**valid_generation_params)
 
 def alpha_with_sa_generation(
   graph: nx.Graph, 
@@ -77,6 +79,7 @@ def alpha_with_sa_generation(
   graph_for_generation = HuGraphForGen(adj_matrix)
 
   valid_generation_params = check_params(graph_for_generation, generation_type, generation_params, recommended_params)
+  generator = GravitationalGenerator(**valid_generation_params)
       
 
 # основная функция для генерации своего трафика
