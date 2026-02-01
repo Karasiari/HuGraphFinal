@@ -63,6 +63,7 @@ def gravity_generation(
   generator = GravitationalGenerator(**valid_generation_params)
   generator.generate(graph_for_generation)
   traffic_graph = graph_for_generation.demands_graph
+  aggregated_traffic_graph = aggregate_multigraph(traffic_graph)
   return traffic_graph
 
 def alpha_generation(
@@ -77,6 +78,7 @@ def alpha_generation(
   generator = GeneratorMultiGraph(**valid_generation_params)
   generator.generate(graph_for_generation)
   traffic_graph = graph_for_generation.demands_graph
+  aggregated_traffic_graph = aggregate_multigraph(traffic_graph)
   return traffic_graph
 
 def alpha_with_sa_generation(
@@ -91,6 +93,7 @@ def alpha_with_sa_generation(
   generator = GeneratorMultiGraphWithSA(**valid_generation_params)
   generator.generate(graph_for_generation)
   traffic_graph = graph_for_generation.demands_graph
+  aggregated_traffic_graph = aggregate_multigraph(traffic_graph)
   return traffic_graph
       
 
@@ -117,4 +120,6 @@ def generate_own_traffic(
     aggregated_traffic_graph = alpha_with_sa_generation(aggregated_graph, generation_params, recommended_params)
   else:
       raise ValueError(f"Тип генерации {generation_type} не известен")
+
+  
   return connected_graph, traffic_graph
