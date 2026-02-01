@@ -62,7 +62,18 @@ class HuGraphForGen:
                 w = A[i, j]
                 if w:
                     G.add_edge(i, j, weight=float(w))
-        return G
+        # берём крупнейшую компоненту
+        comp = max(nx.connected_components(G), key=len)
+        Gc = G.subgraph(comp).copy()
+        # перенумеруем матрицу под компоненту
+        nodes = sorted(Gc.nodes())
+        idx = {u: i for i, u in enumerate(nodes)}
+        A2 = np.zeros((len(nodes), len(nodes)))
+        for u, v, d in Gc.edges(data=True):
+            i, j = idx[u], idx[v]
+            A2[i, j] = A2[j, i] = d["weight"]
+        self.adjacency_matrix = A2
+        return Gc
 
     # ---------- demands: init + alpha + cut ----------
     def generate_initial_demands(
