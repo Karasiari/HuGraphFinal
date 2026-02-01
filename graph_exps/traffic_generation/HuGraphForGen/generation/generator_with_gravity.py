@@ -195,7 +195,7 @@ class GravitationalGenerator:
 
         end = time.time()
         med_w = float(np.median([d["weight"] for *_, d in Gd.edges(data=True)]) if Gd.number_of_edges() else 0.0)
-        res = DemandsGenerationResultGravity(
+        res = DemandsGenerationWithGravityResult(
             graph=graph,
             beta=self.beta,
             intensity=self.intensity,
