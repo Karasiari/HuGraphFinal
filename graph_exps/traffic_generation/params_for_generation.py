@@ -47,39 +47,39 @@ def get_checks(
     if generation_type == "gravity":
         checks = {
             "beta": (0.0, 1.0),
-            "intensity": lambda x: type(x) is int,
+            "intensity": lambda x: isinstance(x, int),
             "centrality": ("degree", "closeness", "harmonic_closeness", "harmonic", "pagerank"),
             "edge_perc": (0.0, 1.0),
             "edge_mode": ("dynamic", "static_top", "static_betascore"),
-            "dyn_max": lambda x: type(x) is float,
+            "dyn_max": lambda x: isinstance(x, float),
             "dyn_law": ("exponential", "linear", None),
-            "dyn_k": lambda x: type(x) is float
+            "dyn_k": lambda x: isinstance(x, float)
         }
     elif generation_type == "alpha":
         checks = {
             "epsilon": (0.0, 1.0),
             "p_ER": (0.0, 1.0),
             "distribution": ["normal"],
-            "median_weight_for_initial": lambda x: (type(x) is int) and (x > 0),
-            "var_for_initial": lambda x: (type(x) is int) and (x > 0),
-            "multi_max": lambda x: (type(x) is int) and (x > 0),
-            "initial_generation": set({"deterministic", "ER"}),
-            "demands_sum": lambda x: (type(x) is float) and (x > 0),
-            "num_edges": lambda x: type(x) is int,
-            "max_iter": lambda x: type(x) is int
+            "median_weight_for_initial": lambda x: isinstance(x, int) and (x > 0),
+            "var_for_initial": lambda x: isinstance(x, int) and (x > 0),
+            "multi_max": lambda x: isinstance(x, int) and (x > 0),
+            "initial_generation": ("deterministic", "ER", None),
+            "demands_sum": lambda x: isinstance(x, float) and (x > 0),
+            "num_edges": lambda x: isinstance(x, int),
+            "max_iter": lambda x: isinstance(x, int)
         }
     elif generation_type == "alpha_with_sa":
         checks = {
             "epsilon": (0.0, 1.0),
             "p_ER": (0.0, 1.0),
             "distribution": ["normal"],
-            "median_weight_for_initial": lambda x: (type(x) is int) and (x > 0),
-            "var_for_initial": lambda x: (type(x) is int) and (x > 0),
-            "multi_max": lambda x: (type(x) is int) and (x > 0),
-            "initial_generation": set({"deterministic", "ER"}),
-            "demands_sum": lambda x: (type(x) is float) and (x > 0),
-            "num_edges": lambda x: type(x) is int,
-            "max_iter": lambda x: type(x) is int,
+            "median_weight_for_initial": lambda x: isinstance(x, int) and (x > 0),
+            "var_for_initial": lambda x: isinstance(x, int) and (x > 0),
+            "multi_max": lambda x: isinstance(x, int) and (x > 0),
+            "initial_generation": ("deterministic", "ER", None),
+            "demands_sum": lambda x: isinstance(x, float) and (x > 0),
+            "num_edges": lambda x: isinstance(x, int),
+            "max_iter": lambda x: isinstance(x, int),
             "t": (0.0, 1.0)
         }
     return checks
