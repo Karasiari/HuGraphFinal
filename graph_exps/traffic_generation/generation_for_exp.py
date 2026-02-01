@@ -3,6 +3,8 @@ import copy
 
 import networkx as nx
 
+from .params_for_generation import check_params
+
 from .HuGraphForGen.core import HuGraphForGen
   
 
@@ -48,30 +50,33 @@ def aggregate_multigraph(
 
 def gravity_generation(
   graph: nx.Graph, 
-  generation_params: Tuple[GenerationParam, ...]
+  generation_params: Tuple[GenerationParam, ...],
+  recommended_params: bool
 ) -> nx.Graph:
   adj_matrix = nx.adjacency_matrix(graph).todense().tolist()
   graph_for_generation = HuGraphForGen(adj_matrix)
 
-  
+  valid_generation_params = check_params(generation_type, generation_params, recommended_params)
 
 def alpha_generation(
   graph: nx.Graph, 
-  generation_params: Tuple[GenerationParam, ...]
+  generation_params: Tuple[GenerationParam, ...],
+  recommended_params: bool
 ) -> nx.Graph:
   adj_matrix = nx.adjacency_matrix(graph).todense().tolist()
   graph_for_generation = HuGraphForGen(adj_matrix)
 
-  
+  valid_generation_params = check_params(generation_type, generation_params, recommended_params)
 
 def alpha_with_sa_generation(
   graph: nx.Graph, 
-  generation_params: Tuple[GenerationParam, ...]
+  generation_params: Tuple[GenerationParam, ...],
+  recommended_params: bool
 ) -> nx.Graph:
   adj_matrix = nx.adjacency_matrix(graph).todense().tolist()
   graph_for_generation = HuGraphForGen(adj_matrix)
 
-  
+  valid_generation_params = check_params(generation_type, generation_params, recommended_params)
       
 
 # основная функция для генерации своего трафика
@@ -80,7 +85,8 @@ def generate_own_traffic(
   graph: nx.MultiGraph, 
   available_demand_volumes: Tuple[VolumeWithProbability, ...],
   generation_type: str,
-  generation_params: Tuple[GenerationParam, ...]: 
+  generation_params: Tuple[GenerationParam, ...],
+  recommended_params: bool = True
 ) -> GenerationResults:
   """
   Функция для генерации своего трафика по графу смежности - для основного эксперимента
@@ -90,11 +96,11 @@ def generate_own_traffic(
 
   aggregated_graph = aggregate_multigraph(connected_graph)
   if generation_type == "gravity":
-    aggregated_traffic_graph = gravity_generation(aggregated_graph, generation_params)
+    aggregated_traffic_graph = gravity_generation(aggregated_graph, generation_params, recommended_params)
   elif generation_type == "alpha":
-    aggregated_traffic_graph = alpha_generation(aggregated_graph, generation_params)
+    aggregated_traffic_graph = alpha_generation(aggregated_graph, generation_params, recommended_params)
   elif generation_type == "alpha_with_sa":
-    aggregated_traffic_graph = alpha_with_sa_generation(aggregated_graph, generation_params)
+    aggregated_traffic_graph = alpha_with_sa_generation(aggregated_graph, generation_params, recommended_params)
   else:
       raise ValueError(f"Тип генерации {generation_type} не известен")
   return connected_graph, traffic_graph
