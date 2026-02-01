@@ -206,6 +206,15 @@ def solve_mcfp_for_exp(
     edge: EdgeKey, 
     network: RemainingNetwork
 ) -> EdgeWithParameter:
+    """
+    Рассчитывает gamma (из решения max concurrent flow problem) для остаточной сети
+    Input:
+          edge - ребро, для которого сформирована остаточная сеть 
+                (для удобного output)
+          network - остаточная сеть
+    Output:
+          gamma для edge как EdgeWithParameter
+    """
     graph, demands_graph = network
     demands_laplacian = get_laplacian(aggregate_graph(demands_graph, weight_name='weight'))
     if not np.any(demands_laplacian):
