@@ -5,7 +5,7 @@ import numpy as np
 
 from .HuGraphForExps.core import HuGraphForExps
 
-# алиасы для читаемости outputов
+# алиасы для читаемости
 EdgeKey = Tuple[int, int]
 EdgeWithParameter = Tuple[Tuple[int, int], float | None]
 AllocationResult = Tuple[str, Tuple[bool, float]]
