@@ -38,10 +38,10 @@ def check_params(
     elif generation_type == "alpha_with_sa":
       defaults, checks = ALPHA_WITH_SA_DEFAULTS, ALPHA_WITH_SA_CHECKS
       
-    right_params = {**defaults, **params}
+    valid_params = {**defaults, **params}
     if checks:
         for param, check in checks.items():
-            value = right_params[param]
+            value = valid_params[param]
             
             if isinstance(check, (list, tuple)) and len(check) == 2:
                 # Диапазон
@@ -57,6 +57,4 @@ def check_params(
                 if not check(value):
                     raise ValueError(f"Недопустимое значение {param}: {value}")
     
-    return right_params
-
-valid_params = check_params(generation_type, params)
+    return valid_params
