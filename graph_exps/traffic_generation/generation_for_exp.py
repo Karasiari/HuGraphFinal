@@ -56,7 +56,7 @@ def gravity_generation(
   adj_matrix = nx.adjacency_matrix(graph).todense().tolist()
   graph_for_generation = HuGraphForGen(adj_matrix)
 
-  valid_generation_params = check_params(graph, generation_type, generation_params, recommended_params)
+  valid_generation_params = check_params(graph_for_generation, generation_type, generation_params, recommended_params)
 
 def alpha_generation(
   graph: nx.Graph, 
@@ -66,7 +66,7 @@ def alpha_generation(
   adj_matrix = nx.adjacency_matrix(graph).todense().tolist()
   graph_for_generation = HuGraphForGen(adj_matrix)
 
-  valid_generation_params = check_params(graph, generation_type, generation_params, recommended_params)
+  valid_generation_params = check_params(graph_for_generation, generation_type, generation_params, recommended_params)
 
 def alpha_with_sa_generation(
   graph: nx.Graph, 
@@ -76,7 +76,7 @@ def alpha_with_sa_generation(
   adj_matrix = nx.adjacency_matrix(graph).todense().tolist()
   graph_for_generation = HuGraphForGen(adj_matrix)
 
-  valid_generation_params = check_params(graph, generation_type, generation_params, recommended_params)
+  valid_generation_params = check_params(graph_for_generation, generation_type, generation_params, recommended_params)
       
 
 # основная функция для генерации своего трафика
