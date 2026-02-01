@@ -11,4 +11,8 @@ def generate_own_traffic(
   generation_type: str,
   generation_params: Tuple[GenerationParam, ...]: 
 ) -> nx.MultiDiGraph:
-  return
+  """
+  Функция для генерации своего трафика по графу смежности - для основного эксперимента
+  """
+  traffic_graph: nx.MultiDiGraph = nx.MultiDiGraph()
+  return traffic_graph
