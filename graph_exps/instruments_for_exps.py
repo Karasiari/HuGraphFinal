@@ -48,7 +48,8 @@ def compute_alpha_for_edge(
     метрики на всех ребрах в exp.py
     Input:
           graph_state - граф-объект класса HuGraphForExps в виде bytes
-          source и target - вершины ребра
+          source,
+          target - вершины ребра
     Output:
           Ребро с метрикой α в виде EdgeWithParameter
     """
@@ -97,7 +98,8 @@ def get_remaining_networks_and_volume_to_reroute(
     производит расчет нужных для основного эксперимента 
     частей этого решения - смотри Output
     Input:
-          graph - граф, на котором проводится эксперимент
+          graph - расширенная версия графа, 
+                  на котором проводится эксперимент
           route_result - результат решения исходного MCF 
                          как словарь проложенных по ребрам путей 
                          по индексу запроса
@@ -173,6 +175,25 @@ def solve_mcf_for_exp(
     available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),), 
     random_seed: int | None = None
 ) -> Tuple[str, SpareCapacityGreedyInput, Dict[EdgeKey, RemainingNetwork], int]:
+    """
+    Решает исходную задачу MCF на графе, обрабатывает это решение,
+    подготавливает результаты решения под алгоритм spare capacity allocation
+    Input:
+          graph - расширенная версия графа, 
+                  на котором проводится эксперимент
+          allocation_type - тип расширения 
+                            (для удобного output)
+          epsilon, 
+          available_volumes, 
+          random_seed - гиперпараметры для алгоритма
+                        spare capacity allocation 
+                        (для удобного output)
+    Output:
+          Возвращает с типом расширения
+          - input формата SpareCapacityGreedyInput для алгоритма spare capacity allocation,
+          - словарь остаточных сетей по EdgeKey ребра, для которого остаточная сеть считается,
+          - суммарный volume запросов для потенциальной перепрокладки для ВСЕХ сценариев падений ребер 
+    """
     route_result, demands, solved, multidigraph = graph.solve_mcf()
     remaining_networks, volume_to_reroute = get_remaining_networks_and_volume_to_reroute(multidigraph, route_result, demands)
     input_for_allocate_spare_capacity_algorithm = convert_to_greedy_input(multidigraph, demands, route_result, epsilon, available_volumes, random_seed)
