@@ -1,3 +1,9 @@
+epsilon=0.025,
+                               p_ER = 2/graph_size, distribution="normal", median_weight_for_initial=20, var_for_initial=1, multi_max=5,
+                               num_edges=None,
+                               initial_generation='deterministic', demands_sum=int(1.5*graph_size*20),
+
+
 from typing import Dict, Any
 
 import networkx as nx
@@ -42,9 +48,32 @@ def get_checks(
             "dyn_k": lambda x: type(x) is float
         }
     elif generation_type == "alpha":
-      checks =
+        checks = {
+            "epsilon": (0.0, 1.0),
+            "p_ER": (0.0, 1.0),
+            "distribution": ["normal"],
+            "median_weight_for_initial": lambda x: (type(x) is int) and (x > 0),
+            "var_for_initial": lambda x: (type(x) is int) and (x > 0),
+            "multi_max": lambda x: (type(x) is int) and (x > 0),
+            "initial_generation": set({"deterministic", "ER"}),
+            "demands_sum": lambda x: (type(x) is float) and (x > 0),
+            "num_edges": lambda x: type(x) is int,
+            "max_iter": lambda x: type(x) is int
+        }
     elif generation_type == "alpha_with_sa":
-      checks =
+        checks = {
+            "epsilon": (0.0, 1.0),
+            "p_ER": (0.0, 1.0),
+            "distribution": ["normal"],
+            "median_weight_for_initial": lambda x: (type(x) is int) and (x > 0),
+            "var_for_initial": lambda x: (type(x) is int) and (x > 0),
+            "multi_max": lambda x: (type(x) is int) and (x > 0),
+            "initial_generation": set({"deterministic", "ER"}),
+            "demands_sum": lambda x: (type(x) is float) and (x > 0),
+            "num_edges": lambda x: type(x) is int,
+            "max_iter": lambda x: type(x) is int,
+            "t": (0.0, 1.0)
+        }
     return checks
 
 def check_params(
@@ -69,12 +98,13 @@ def check_params(
     if checks:
         for param, check in checks.items():
             value = params[param]
-            
+            if value is None:
+                continue
             if isinstance(check, (list, tuple)) and len(check) == 2:
                 # Диапазон
                 min_val, max_val = check
-                if not (min_val < value < max_val):
-                    raise ValueError(f"{param} вне диапазона ({min_val}, {max_val})")
+                if not (min_val <= value <= max_val):
+                    raise ValueError(f"{param} вне диапазона [{min_val}, {max_val}]")
             elif isinstance(check, (list, set, tuple)):
                 # Список допустимых значений
                 if value not in check:
