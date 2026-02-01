@@ -54,6 +54,7 @@ def aggregate_multigraph(
 
 def gravity_generation(
   graph: nx.Graph, 
+  generation_type: str,
   generation_params: GenerationParams,
   recommended_params: bool
 ) -> nx.Graph:
@@ -69,6 +70,7 @@ def gravity_generation(
 
 def alpha_generation(
   graph: nx.Graph, 
+  generation_type: str,
   generation_params: GenerationParams,
   recommended_params: bool
 ) -> nx.Graph:
@@ -84,6 +86,7 @@ def alpha_generation(
 
 def alpha_with_sa_generation(
   graph: nx.Graph, 
+  generation_type: str,
   generation_params: GenerationParams,
   recommended_params: bool
 ) -> nx.Graph:
@@ -140,11 +143,11 @@ def generate_own_traffic(
 
   aggregated_graph = aggregate_multigraph(connected_graph)
   if generation_type == "gravity":
-    aggregated_traffic_graph = gravity_generation(aggregated_graph, generation_params, recommended_params)
+    aggregated_traffic_graph = gravity_generation(aggregated_graph, generation_type, generation_params, recommended_params)
   elif generation_type == "alpha":
-    aggregated_traffic_graph = alpha_generation(aggregated_graph, generation_params, recommended_params)
+    aggregated_traffic_graph = alpha_generation(aggregated_graph, generation_type, generation_params, recommended_params)
   elif generation_type == "alpha_with_sa":
-    aggregated_traffic_graph = alpha_with_sa_generation(aggregated_graph, generation_params, recommended_params)
+    aggregated_traffic_graph = alpha_with_sa_generation(aggregated_graph, generation_type, generation_params, recommended_params)
   else:
       raise ValueError(f"Тип генерации {generation_type} не известен")
 
