@@ -2,11 +2,21 @@ beta=beta, intensity=int(3*median_capacity*graph_size), centrality='pagerank', e
 
 from typing import Dict, Any
 
-GRAVITY_DEFAULTS = {"lr": 0.001, "bs": 32, "opt": "adam"}
+GRAVITY_DEFAULTS = {
+    "centrality": "pagerank", 
+    "edge_mode": "dynamic", 
+    "dyn_max": 1, 
+    "dyn_law": "exponential"
+}
 GRAVITY_CHECKS = {
-    "lr": (1e-6, 1.0),          # диапазон
-    "bs": {16, 32, 64, 128},    # множество допустимых
-    "opt": ["adam", "sgd"]      # список допустимых
+    "beta": (0.0, 1.0),
+    "intensity": lambda x: type(x) is int,
+    "centrality": ("degree", "closeness", "harmonic_closeness", "harmonic", "pagerank"),
+    "edge_perc": (0.0, 1.0),
+    "edge_mode": ("dynamic", "static_top", "static_betascore"),
+    "dyn_max": lambda x: type(x) is float,
+    "dyn_law": ("exponential", "linear", None),
+    "dyn_k": lambda x: type(x) is float
 }
 
 def check_params(
@@ -34,10 +44,10 @@ def check_params(
             value = right_params[param]
             
             if isinstance(check, (list, tuple)) and len(check) == 2:
-                # Диапазон (min, max)
+                # Диапазон
                 min_val, max_val = check
-                if not (min_val <= value <= max_val):
-                    raise ValueError(f"{param} вне диапазона [{min_val}, {max_val}]")
+                if not (min_val < value < max_val):
+                    raise ValueError(f"{param} вне диапазона ({min_val}, {max_val})")
             elif isinstance(check, (list, set, tuple)):
                 # Список допустимых значений
                 if value not in check:
