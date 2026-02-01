@@ -105,7 +105,7 @@ def check_params(
     checks = get_checks(generation_type)
     if checks:
         for param, check in checks.items():
-            value = params[param]
+            value = params.get(param, None)
             if value is None:
                 continue
             if isinstance(check, (list, tuple)) and len(check) == 2:
