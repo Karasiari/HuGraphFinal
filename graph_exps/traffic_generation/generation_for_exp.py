@@ -18,6 +18,7 @@ GenerationResults = Tuple[nx.MultiGraph, nx.MultiDiGraph]
 
 
 # функция для нахождения greatest connected component графа связности - генерация корректна только на связных графах
+
 def find_gcc(
   graph: nx.MultiGraph
 ) -> nx.MultiGraph:
