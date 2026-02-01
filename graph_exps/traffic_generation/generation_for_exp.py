@@ -2,6 +2,7 @@ from typing import Tuple, Dict, Any
 import copy
 
 import networkx as nx
+import numpy as np
 
 from .params_for_generation import check_params
 
