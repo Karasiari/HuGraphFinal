@@ -35,6 +35,7 @@ from .spare_capacity_allocation_algorithm.output_converter import convert_greedy
 # вспомогательные функции для основного экспа - для расчетов, параллелизаций и проч.
 # ----------------------------------------------------------------------------------
 
+
 # функция для расчета α для ОДНОГО ребра
 
 def compute_alpha_for_edge(
@@ -61,13 +62,23 @@ def compute_alpha_for_edge(
         
     alpha = graph.calculate_alpha()
     return (source, target), alpha
-    
+
+
 # функция для расширения графа
 
 def expand_graph(
     graph: HuGraphForExps, 
     source_target_sequence_to_add: List[EdgeWithParameter]
 ) -> HuGraphForExps:
+    """
+    Расширяет граф по списку новых ребер
+    Input:
+          graph - граф для расширения
+          source_target_sequence_to_add - список новых ребер 
+                                          как список EdgeWithParameter
+    Output:
+          Расширенный граф
+    """
     for edge, capacity in source_target_sequence_to_add:
         source, target = edge
         graph.change_multiedge(source, target, type='insert', capacity=capacity)
@@ -81,6 +92,23 @@ def get_remaining_networks_and_volume_to_reroute(
     route_result: RouteResult, 
     demands: DemandsDict
 ) -> Tuple[Dict[EdgeKey, RemainingNetwork], int]:
+    """
+    По результатам решения исходного MCF на графе 
+    производит расчет нужных для основного эксперимента 
+    частей этого решения - смотри Output
+    Input:
+          graph - граф, на котором проводится эксперимент
+          route_result - результат решения исходного MCF 
+                         как словарь проложенных по ребрам путей 
+                         по индексу запроса
+          demands - информация по проложенным запросам
+                    как словарь по индексу запроса
+    Output:
+          Возвращает словарь остаточных сетей по EdgeKey ребра, 
+          для которого остаточная сеть считается;
+          второй output - суммарный volume запросов для потенциальной перепрокладки,
+                          суммированный по ВСЕМ сценариям падения ребра
+    """
     slack_by_edge: Dict[EdgeKey, int] = {}
     demands_through_edge: Dict[EdgeKey, List[int]] = {}
     unique_edges: Dict[EdgeKey, bool] = {}
