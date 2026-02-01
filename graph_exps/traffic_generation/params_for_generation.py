@@ -41,6 +41,7 @@ def get_recommended_params(
         }
     return recommended
 
+
 def get_checks(
     generation_type: str
 ) -> Dict[str, Any]:
@@ -83,6 +84,7 @@ def get_checks(
             "t": (0.0, 1.0)
         }
     return checks
+
 
 def check_params(
     graph: HuGraphForGen,
