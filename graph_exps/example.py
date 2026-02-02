@@ -1,5 +1,5 @@
 # импорт читалки ху графов
-from readers.hugraph_reader import read_hu_graphs
+from .readers.hugraph_reader import read_hu_graphs
 # импорт генерации своего трафика
 from .traffic_generation.generation_for_exp import generate_own_traffic
 # импорт генераци SNR-BA графа
