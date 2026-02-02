@@ -58,7 +58,7 @@ def get_checks(
         }
     elif generation_type == "alpha":
         checks = {
-            "alpha": (0.0, 1.0),
+            "alpha_target": (0.0, 1.0),
             "epsilon": (0.0, 1.0),
             "p_ER": (0.0, 1.0),
             "distribution": ["normal"],
@@ -72,7 +72,7 @@ def get_checks(
         }
     elif generation_type == "alpha_with_sa":
         checks = {
-            "alpha": (0.0, 1.0),
+            "alpha_target": (0.0, 1.0),
             "epsilon": (0.0, 1.0),
             "p_ER": (0.0, 1.0),
             "distribution": ["normal"],
