@@ -10,7 +10,7 @@ available_demand_volumes = ((1, 0.9), (2, 0.1))
 capacity_value = 80.0
 
 # новые ресурсы и типы для распределения ресурсов
-additional_resources = [capacity_value, capacity_value, capacity_value]
+additional_resources = [capacity_value] * 3
 allocation_types = ['alpha', 'random_alpha', 'random']
 
 # генерация SNR-BA графа
@@ -24,7 +24,14 @@ adj_graph_alpha, traffic_graph_alpha =  generate_own_traffic(
   generation_params={"alpha": 0.35, "epsilon": 0.025, "median_weight_for_initial": 20, "var_for_initial": 1, "multi_max": 5, "t": 0.5}
 )
 graph_for_exp_alpha = HuGraphForExps(adj_graph_alpha, traffic_graph_alpha)
-results_alpha = expand_test_for_graph(graph_for_exp_alpha, additional_resources, allocation_types, tries_for_allocation=10, epsilon=1.2, available_volumes=available_demand_volumes)
+results_alpha = expand_test_for_graph(
+  graph=graph_for_exp_alpha, 
+  additional_resources=additional_resources, 
+  allocation_types=allocation_types, 
+  tries_for_allocation=10, 
+  epsilon=1.2, 
+  available_volumes=available_demand_volumes
+)
 
 # генерация своего трафика методом "gravity" и эксперимент для графа
 adj_graph_gravity, traffic_graph_gravity =  generate_own_traffic(
@@ -34,4 +41,11 @@ adj_graph_gravity, traffic_graph_gravity =  generate_own_traffic(
   generation_params={"beta": 0.15, "dyn_k": 0.9}
 )
 graph_for_exp_gravity = HuGraphForExps(adj_graph_gravity, traffic_graph_gravity)
-results_gravity = expand_test_for_graph(graph_for_exp_gravity, additional_resources, allocation_types, tries_for_allocation=10, epsilon=1.2, available_volumes=available_demand_volumes)
+results_gravity = expand_test_for_graph(
+  graph=graph_for_exp_gravity, 
+  additional_resources=additional_resources, 
+  allocation_types=allocation_types, 
+  tries_for_allocation=10, 
+  epsilon=1.2, 
+  available_volumes=available_demand_volumes
+)
