@@ -5,8 +5,10 @@ import random
 import networkx as nx
 import numpy as np
 
+# для подготовки гиперпараметров генерации
 from .params_for_generation import check_params
 
+# импорт генераторов
 from .HuGraphForGen.core import HuGraphForGen
 from .HuGraphForGen.generation.generator_with_gravity import GravitationalGenerator
 from .HuGraphForGen.generation.generator import GeneratorMultiGraph
@@ -25,7 +27,12 @@ def find_gcc(
   graph: nx.MultiGraph
 ) -> nx.MultiGraph:
   """
-  Находит наибольшую компоненту связности графа - для корректной генерации трафика на input приходит связный граф смежности
+  Находит наибольшую компоненту связности графа - 
+  для корректной генерации трафика на input приходит связный граф смежности
+  Input:
+        graph - граф смежности, на котором генерируем трафик
+  Output:
+        Наибольшая связная часть графа смежности
   """
   gcc = max(nx.connected_components(graph), key=len)
   connected_graph = graph.subgraph(gcc).copy()
@@ -39,7 +46,11 @@ def aggregate_multigraph(
   multigraph: nx.MultiGraph | nx.MultiDiGraph
 ) -> nx.Graph:
   """
-  Агрегация графа
+  Агрегация графа для правильного формата входа в алгоритмы генерации
+  Input:
+        multigraph - итоговый связный граф смежности, на котором генерируем трафик
+  Output:
+        Агрегированная версия графа
   """
   graph = nx.Graph()
   graph.add_nodes_from(range(multigraph.number_of_nodes()))
@@ -137,6 +148,23 @@ def generate_own_traffic(
 ) -> GenerationResults:
   """
   Функция для генерации своего трафика по графу смежности - для основного эксперимента
+  Input:
+        graph - граф смежности, на котором генерируем свой трафик, как nx.MultiGraph
+        available_demand_volumes - распределение допустимых весов запросов 
+                                   для дробления агрегированных запросов генерации
+                                   в make_multidemands,
+                                   как кортеж кортежей вида (значение, вероятность)
+        generation_type - тип генерации трафика:
+                          "gravity", 
+                          "alpha", 
+                          "alpha_with_sa" как "alpha" с отжигом
+        generation_params - гиперпараметры для генерации
+        recommended_params - флаг, использовать ли рекомендованные гиперпараметры генерации
+                            (см. рекомендации в params_for_generation.py)
+  Output:
+        Результаты генерации как кортеж из:
+        - наибольшей связной части графа смежности 
+        - сгенерированного на ней графа трафика как nx.MultiDiGraph
   """
   connected_graph = find_gcc(graph)
 
