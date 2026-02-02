@@ -13,7 +13,7 @@ def get_weighted_graph(
     Input:
           unweighted_graph - сгенерированный SNR-BA граф
           capacity_value - значение веса для ребер
-     Output:
+    Output:
           Граф с весом capacity_value для любого ребра 
           как nx.MultiGraph, но без параллельных ребер
     """
