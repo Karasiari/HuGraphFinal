@@ -127,24 +127,51 @@ def make_multidemands(
   aggregated_traffic_graph: nx.Graph, 
   available_demand_volumes: Tuple[VolumeWithProbability, ...]
 ) -> nx.MultiDiGraph:
-  traffic_matrix = nx.adjacency_matrix(aggregated_traffic_graph).todense().tolist()
-  n = len(traffic_matrix)
-  G = nx.MultiDiGraph()
-  for i in range(n):
-    G.add_node(i)
-  for i in range(n):
-    for j in range(n):
-      weight = traffic_matrix[i][j]
-      if isinstance(weight, (int, np.integer)):
-        int_weight = int(weight)
-      else:
-        int_weight = int(round(float(weight)))
-      for _ in range(int_weight):
+  """
+  Функция для дробления трафика согласно допустимым значениям весов запросов
+  Input:
+        aggregated_traffic_graph - сгенерированный граф трафика с агрегированными запросами
+        available_demand_volumes - распределение допустимых весов запросов 
+                                   для дробления агрегированных запросов генерации
+                                   как кортеж кортежей вида (значение, вероятность)
+  Output:
+        Граф трафика с ориентированными (ориентация выбирается случайно равновероятно) запросами 
+        допустимых весов как nx.MultiDiGraph
+  """
+  import bisect
+  draw = lambda probs: random.choices(*zip(*probs), k=1)[0]
+  traffic_graph: nx.MultiDiGraph = nx.MultiDiGraph()
+  
+  def check_available_volumes(available_demand_volumes: Tuple[VolumeWithProbability, ...]) -> None:
+    summed_probability = 0
+    for demand_volume in available_demand_volumes:
+      if not isinstance(demand_volume[0], int) or (demand_volume <= 0) or (demand_volume[1] <= 0):
+        raise ValueError(f"Недопустимое значение возможного веса запроса {demand_volume}")
+      summed_probability += demand_volume
+    if summed_probability != 1:
+      raise ValueError("Кортеж возможных весов запросов не является распределением")
+  check_available_volumes(available_demand_volumes)
+  available_demand_volume_values = sorted([value for value, probability in available_demand_volumes])
+
+  traffic_graph.add_nodes_from(aggregated_traffic_graph)
+  for u, v, data in aggregated_traffic_graph.edges(data=True):
+    aggregated_volume = int(data['weight'])
+    while aggregated_volume > 0:
+      drawed_volume = draw(available_demand_volumes)
+      while drawed_volume > aggregated_volume:
+        pos = bisect.bisect_left(available_demand_volume_values, aggregated_volume)
+        if pos == 0:
+          aggregated_volume = 0
+          break
+        drawed_volume = available_demand_volume_values[pos-1]
+        break
+      if aggregated_volume > 0:
         if random.random() < 0.5:
-          G.add_edge(i, j, weight=1)
+          traffic_graph.add_edge(u, v, weight=drawed_volume)
         else:
-          G.add_edge(j, i, weight=1)
-  return G
+          traffic_graph.add_edge(v, u, weight=drawed_volume)
+        aggregated_volume -= drawed_volume
+  return traffic_graph
   
 
 # основная функция для генерации своего трафика
