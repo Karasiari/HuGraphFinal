@@ -5,15 +5,16 @@ from .SNRBA_generation.generation import generate_snr_ba_graph
 # импорт окружения эксперимента
 from .exp import *
 
-# допустимые веса запросов
+# допустимые веса запросов и capacity для SNR-BA графа
 available_demand_volumes = ((1, 0.9), (2, 0.1))
+capacity_value = 80.0
 
 # новые ресурсы и типы для распределения ресурсов
-additional_resources = [80.0, 80.0, 80.0]
+additional_resources = [capacity_value, capacity_value, capacity_value]
 allocation_types = ['alpha', 'random_alpha', 'random']
 
 # генерация SNR-BA графа
-snr_ba_graph = generate_snr_ba_graph(num_nodes=30, capacity_value=80.0)
+snr_ba_graph = generate_snr_ba_graph(num_nodes=30, capacity_value=capacity_value)
 
 # генерация своего трафика методом "alpha_with_sa" и эксперимент для графа
 adj_graph_alpha, traffic_graph_alpha =  generate_own_traffic(
