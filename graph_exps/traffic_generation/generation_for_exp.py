@@ -3,7 +3,6 @@ import copy
 import random
 
 import networkx as nx
-import numpy as np
 
 # для подготовки гиперпараметров генерации
 from .params_for_generation import check_params
