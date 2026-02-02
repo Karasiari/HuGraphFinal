@@ -1,14 +1,7 @@
+# импорт вспомогательных функций для генерации SNR-BA
 from .instruments import *
 
-# вспомогательные функции для генерации SNR BA
-
-def generate_uniform_nodes(n: int,
-                           seed: int = 0,
-                           xlim: Tuple[float, float] = (0.0, 1.0),
-                           ylim: Tuple[float, float] = (0.0, 1.0),
-                           ) -> List[Tuple[float, float]]:
-    rng = random.Random(seed)
-    return [(rng.uniform(*xlim), rng.uniform(*ylim)) for _ in range(n)]
+# основная функция генерации SNR-BA графа
 
 def run_experiments(num_experiments=3, num_nodes=30, radii=None, capacity=80.0, seed=0):
     if radii is None:
