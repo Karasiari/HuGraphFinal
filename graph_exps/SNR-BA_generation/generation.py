@@ -2,6 +2,21 @@
 from .instruments import *
 
 
+# функция для взвешивания графа
+
+def get_weighted_graph(
+    unweighted_graph: nx.Graph,
+    capacity_value: float
+) -> nx.MultiGraph:
+    weighted_graph: nx.MultiGraph = nx.MultiGraph()
+    if capacity_value <= 0:
+        raise ValueError("Значение capacity должно быть положительным")
+
+    weighted_graph.add_nodes_from(unweighted_graph)
+    for u, v in unweighted_graph.edges():
+        weighted_graph.add_edge(u, v, {"capacity": capacity_value})
+    return weighted_graph
+
 # основная функция генерации SNR-BA графа
 
 def generate_snr_ba_graph(
