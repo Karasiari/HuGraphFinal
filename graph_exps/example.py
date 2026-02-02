@@ -52,7 +52,21 @@ results_gravity = expand_test_for_graph(
   available_volumes=available_demand_volumes
 )
 
+
 # то же, но для ху графа
 
+# читаем граф
 hu_graphs_names = ['cola_t3']
 hu_graphs = read_hu_graphs(path_to_folder, hu_graphs_names, True)
+adj_graph_hu, traffic_graph_hu = hu_graphs['cola_t3']['adj_graph'], hu_graphs['cola_t3']['traffic_graph']
+
+# проводим эксперимент
+graph_for_exp_hu = HuGraphForExps(adj_graph_hu, traffic_graph_hu)
+results_hu = expand_test_for_graph(
+  graph=graph_for_exp_hu, 
+  additional_resources=additional_resources, 
+  allocation_types=allocation_types, 
+  tries_for_allocation=10, 
+  epsilon=1.2, 
+  available_volumes=available_demand_volumes
+)
