@@ -98,9 +98,10 @@ def alpha_generation(
   adj_matrix = nx.adjacency_matrix(graph).todense().tolist()
   graph_for_generation = HuGraphForGen(adj_matrix)
   valid_generation_params = check_params(graph_for_generation, generation_type, generation_params, recommended_params)
+  alpha_target_value = valid_generation_params.pop("alpha_target")
   
   generator = GeneratorMultiGraph(**valid_generation_params)
-  generator.generate(graph_for_generation)
+  generator.generate(graph_for_generation, alpha_target_value)
   traffic_graph = graph_for_generation.demands_graph
   return traffic_graph
 
@@ -113,9 +114,10 @@ def alpha_with_sa_generation(
   adj_matrix = nx.adjacency_matrix(graph).todense().tolist()
   graph_for_generation = HuGraphForGen(adj_matrix)
   valid_generation_params = check_params(graph_for_generation, generation_type, generation_params, recommended_params)
+  alpha_target_value = valid_generation_params.pop("alpha_target")
   
   generator = GeneratorMultiGraphWithSA(**valid_generation_params)
-  generator.generate(graph_for_generation)
+  generator.generate(graph_for_generation, alpha_target_value)
   traffic_graph = graph_for_generation.demands_graph
   return traffic_graph
 
