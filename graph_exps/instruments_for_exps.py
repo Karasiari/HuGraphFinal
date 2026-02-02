@@ -15,8 +15,7 @@ RemainingNetwork = Tuple[nx.DiGraph, nx.MultiDiGraph]
 
 # импорты для solve_mcfp_for_exp
 from .HuGraphForExps.mcfp_algorithm.main_algorithm import solve_max_concurrent_flow_problem
-from .HuGraphForExps.instruments import aggregate_graph
-from .HuGraphForExps.instruments import get_laplacian
+from .HuGraphForExps.instruments import aggregate_graph, get_laplacian
 
 
 # импорт класса под нужный input в алгоритм перепрокладки
