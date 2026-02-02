@@ -1,6 +1,7 @@
 # импорт вспомогательных функций для генерации SNR-BA
 from .instruments import *
 
+
 # основная функция генерации SNR-BA графа
 
 def generate_snr_ba_graph(
