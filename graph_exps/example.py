@@ -21,7 +21,7 @@ adj_graph_alpha, traffic_graph_alpha =  generate_own_traffic(
   snr_ba_graph, 
   available_demand_volumes, 
   generation_type="alpha_with_sa", 
-  generation_params={"alpha": 0.35, "epsilon": 0.025, "median_weight_for_initial": 20, "var_for_initial": 1, "multi_max": 5, "t": 0.5}
+  generation_params={"alpha_target": 0.35, "epsilon": 0.025, "median_weight_for_initial": 20, "var_for_initial": 1, "multi_max": 5, "t": 0.5}
 )
 graph_for_exp_alpha = HuGraphForExps(adj_graph_alpha, traffic_graph_alpha)
 results_alpha = expand_test_for_graph(
