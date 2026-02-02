@@ -167,8 +167,8 @@ def generate_own_traffic(
         - сгенерированного на ней графа трафика как nx.MultiDiGraph
   """
   connected_graph = find_gcc(graph)
-
   aggregated_graph = aggregate_multigraph(connected_graph)
+  
   if generation_type == "gravity":
     aggregated_traffic_graph = gravity_generation(aggregated_graph, generation_type, generation_params, recommended_params)
   elif generation_type == "alpha":
