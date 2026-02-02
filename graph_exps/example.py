@@ -51,3 +51,8 @@ results_gravity = expand_test_for_graph(
   epsilon=1.2, 
   available_volumes=available_demand_volumes
 )
+
+# то же, но для ху графа
+
+hu_graphs_names = ['cola_t3']
+hu_graphs = read_hu_graphs(path_to_folder, hu_graphs_names, True)
