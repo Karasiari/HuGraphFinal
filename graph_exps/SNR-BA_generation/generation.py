@@ -34,6 +34,17 @@ def generate_snr_ba_graph(
     capacity_value: float, 
     random_seed: Optional[int] = None
 ) -> nx.Graph:
+    """
+    Функция генерации SNR-BA графа смежности
+    Input:
+          num_nodes - количество вершин для генерируемого графа
+          capacity_value - значение веса для ребер генерируемого графа
+                           все ребра одного веса - правильный формат для 
+                           эксперимента
+          random_seed
+    Output:
+          Сгенерированный SNR-BA граф смежности
+    """
     coords = generate_uniform_nodes(num_nodes, random_seed)
     snr_ba_graph_unweighted = snr_ba_from_latlon(coords, m=2, theta=5.0, seed=random_seed)
     snr_ba_graph = get_weighted_graph(snr_ba_graph_unweighted, capacity_value)
