@@ -23,7 +23,7 @@ def get_weighted_graph(
 
     weighted_graph.add_nodes_from(unweighted_graph)
     for u, v in unweighted_graph.edges():
-        weighted_graph.add_edge(u, v, data={"capacity": capacity_value})
+        weighted_graph.add_edge((u, v, {"capacity": capacity_value}))
     return weighted_graph
 
 
