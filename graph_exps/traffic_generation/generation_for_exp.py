@@ -118,11 +118,11 @@ def make_multi_demands(
         int_weight = int(weight)
       else:
         int_weight = int(round(float(weight)))
-        for _ in range(int_weight):
-          if random.random() < 0.5:
-            G.add_edge(i, j, weight=1)
-          else:
-            G.add_edge(j, i, weight=1)
+      for _ in range(int_weight):
+        if random.random() < 0.5:
+          G.add_edge(i, j, weight=1)
+        else:
+          G.add_edge(j, i, weight=1)
   return G
   
 
