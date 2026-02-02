@@ -22,8 +22,10 @@ def get_weighted_graph(
         raise ValueError("Значение capacity должно быть положительным")
 
     weighted_graph.add_nodes_from(unweighted_graph)
+    weighted_edges = []
     for u, v in unweighted_graph.edges():
-        weighted_graph.add_edge(u, v, data={"capacity": capacity_value})
+        weighted_edges.append((u, v, {"capacity": capacity_value}))
+    weighted_graph.add_edges_from(weighted_edges)
     return weighted_graph
 
 
