@@ -191,6 +191,14 @@ def generate_snr_ba(coords: Iterable[Coord],
 # Convenience wrapper
 # -----------------------------
 
+def generate_uniform_nodes(n: int,
+                           seed: int = 0,
+                           xlim: Tuple[float, float] = (0.0, 1.0),
+                           ylim: Tuple[float, float] = (0.0, 1.0),
+                           ) -> List[Tuple[float, float]]:
+    rng = random.Random(seed)
+    return [(rng.uniform(*xlim), rng.uniform(*ylim)) for _ in range(n)]
+
 def snr_ba_from_latlon(latlons: List[Tuple[float, float]],
                        m: Optional[int] = None,
                        theta: float = 5.0,
