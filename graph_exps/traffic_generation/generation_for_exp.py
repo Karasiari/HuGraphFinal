@@ -145,9 +145,9 @@ def make_multidemands(
   def check_available_volumes(available_demand_volumes: Tuple[VolumeWithProbability, ...]) -> None:
     summed_probability = 0
     for demand_volume in available_demand_volumes:
-      if not isinstance(demand_volume[0], int) or (demand_volume <= 0) or (demand_volume[1] <= 0):
+      if not isinstance(demand_volume[0], int) or (demand_volume[0] <= 0) or (demand_volume[1] <= 0):
         raise ValueError(f"Недопустимое значение возможного веса запроса {demand_volume}")
-      summed_probability += demand_volume
+      summed_probability += demand_volume[1]
     if summed_probability != 1:
       raise ValueError("Кортеж возможных весов запросов не является распределением")
   check_available_volumes(available_demand_volumes)
