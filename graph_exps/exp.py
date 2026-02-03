@@ -5,7 +5,6 @@ import pandas as pd
 
 import pickle
 from tqdm.auto import tqdm
-from tqdm_joblib import tqdm_joblib 
 from joblib import Parallel, delayed
 
 # импорт вспомогательных функций
@@ -39,10 +38,9 @@ def compute_alpha_for_all_edges(
     # Обработка всех рёбер
     source_target_sequence = [(u, v) for u, v in graph.graph.edges()]
 
-    with tqdm_joblib(desc="Processing all edges", total=len(source_target_sequence)):
-      results_all = Parallel(n_jobs=n_jobs)(
-        delayed(compute_alpha_for_edge)(graph_state, u, v)
-        for u, v in source_target_sequence
+    results_all = Parallel(n_jobs=n_jobs)(
+      delayed(compute_alpha_for_edge)(graph_state, u, v)
+      for u, v in tqdm(source_target_sequence, desc="Processing all edges", total=len(source_target_sequence))
     )
     edges_with_alphas = [r for r in results_all if r is not None]
     return edges_with_alphas
