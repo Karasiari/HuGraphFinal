@@ -40,7 +40,7 @@ def compute_alpha_for_all_edges(
     source_target_sequence = [(u, v) for u, v in graph.graph.edges()]
 
     with tqdm_joblib(desc="Processing all edges", total=len(source_target_sequence)):
-    results_all = Parallel(n_jobs=n_jobs)(
+      results_all = Parallel(n_jobs=n_jobs)(
         delayed(compute_alpha_for_edge)(graph_state, u, v)
         for u, v in source_target_sequence
     )
