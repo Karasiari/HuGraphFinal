@@ -88,7 +88,7 @@ def expand_graph(
     return expanded_graph
 
 
-# функция для отдельного расчета части результатов решения исходного MCF
+# функция для удобного отдельного расчета части результатов решения исходного MCF
 
 def get_remaining_networks_and_volume_to_reroute(
     graph: nx.MultiDiGraph, 
@@ -171,21 +171,29 @@ def get_remaining_networks_and_volume_to_reroute(
     return remaining_networks, volume_to_reroute
     
 
-# отдельная функция для предварительного решения MCF в рамках эксперимента - под параллелизацию в exp.py
+# функция для обработки решения исходного MCF в рамках эксперимента - под параллелизацию в exp.py
 
-def solve_mcf_for_exp(
-    graph: HuGraphForExps, 
+def convert_mcf_results_for_exp(
+    graph: nx.MultiDiGraph, 
+    route_result: RouteResult,
+    demands: DemandsDict,
     allocation_type: str, 
     epsilon: float = 1.0, 
     available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),), 
     random_seed: int | None = None
 ) -> Tuple[str, SpareCapacityGreedyInput, Dict[EdgeKey, RemainingNetwork], int]:
     """
-    Решает исходную задачу MCF на графе, обрабатывает это решение,
-    подготавливает результаты решения под алгоритм spare capacity allocation
+    Обрабатывает решение исходной задачи MCF на нерасширенном графе
+    под алгоритм spare capacity allocation
     Input:
           graph - расширенная версия графа, 
-                  на котором проводится эксперимент
+                  на котором проводится эксперимент;
+                  результаты обрабатываются на расширенном
+          route_result - результат решения исходного MCF 
+                         как словарь проложенных по ребрам путей 
+                         по индексу запроса
+          demands - информация по проложенным в ходе решения исходного MCF запросам
+                    как словарь по индексу запроса
           allocation_type - тип расширения 
                             (для удобного output)
           epsilon, 
@@ -199,9 +207,8 @@ def solve_mcf_for_exp(
           - словарь остаточных сетей по EdgeKey ребра, для которого остаточная сеть считается,
           - суммарный volume запросов для потенциальной перепрокладки для ВСЕХ сценариев падений ребер 
     """
-    route_result, demands, solved, multidigraph = graph.solve_mcf()
-    remaining_networks, volume_to_reroute = get_remaining_networks_and_volume_to_reroute(multidigraph, route_result, demands)
-    input_for_allocate_spare_capacity_algorithm = convert_to_greedy_input(multidigraph, demands, route_result, epsilon, available_volumes, random_seed)
+    remaining_networks, volume_to_reroute = get_remaining_networks_and_volume_to_reroute(graph, route_result, demands)
+    input_for_allocate_spare_capacity_algorithm = convert_to_greedy_input(graph, demands, route_result, epsilon, available_volumes, random_seed)
     return allocation_type, input_for_allocate_spare_capacity_algorithm, remaining_networks, volume_to_reroute
 
 
