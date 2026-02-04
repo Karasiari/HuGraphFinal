@@ -152,21 +152,6 @@ class HuGraphForExps:
     # ---
     # cut
     # ---
-    def _compute_least_nonzero_vector(self, L: np.ndarray) -> np.ndarray:
-        # находим все собственные значения и векторы
-        eigenvalues, eigenvectors = np.linalg.eigh(L)
-
-        # находим индекс минимального ненулевого собственного значения
-        # (первое значение в спектре для связного графа — 0)
-        eps = 1e-12  # порог для сравнения с нулём
-        nonzero_indices = np.where(eigenvalues > eps)[0]
-
-        idx = nonzero_indices[0]  # минимальное ненулевое собственное значение
-
-        # собственный вектор, соответствующий минимальному ненулевому собственному значению
-        least_nonzero_vector = eigenvectors[:, idx]
-
-        return least_nonzero_vector
 
     def generate_cut(self, type: str = "min") -> list:
         """
@@ -188,11 +173,11 @@ class HuGraphForExps:
 
         if type == "min":
             # для min-cut используем первый ненулевой собственный вектор лапласиана смежности
-            v = self._compute_least_nonzero_vector(self.laplacian)
+            v = compute_least_nonzero_vector(self.laplacian)
         if type == "min_Lalpha":
             # для min_Lalpha используем первый ненулевой собственный вектор L_alpha
             self.calculate_alpha()
-            v = self._compute_least_nonzero_vector(self.L_alpha)
+            v = compute_least_nonzero_vector(self.L_alpha)
 
          # используем медиану вектора для разбиения
          med = float(np.median(v))
