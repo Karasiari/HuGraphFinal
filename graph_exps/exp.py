@@ -119,11 +119,11 @@ def get_edges_for_remaining_networks(
   Output:
         Множество ребер, для которых мы будем рассматривать остаточные сети в эксперименте
   """
-  edges_for_remaining_networks: Set[EdgeKey] = {}
+  edges_for_remaining_networks: Set[EdgeKey] = set()
     
   for _, multidigraph in expanded_graphs.items():
     if remaining_networks_pref == "all":
-      edges_for_remaining_networks = {tuple(sorted(edge[:2])) for edge in multidigraph.edges()}
+      edges_for_remaining_networks = set(tuple(sorted(edge[:2])) for edge in multidigraph.edges())
       break
     elif remaining_networks_pref == "mincuts":
       slack_graph = get_slack_graph(multidigraph, route_result, demands)
