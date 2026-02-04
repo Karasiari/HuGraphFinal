@@ -152,7 +152,6 @@ class HuGraphForExps:
     # ---
     # cut
     # ---
-
     def generate_cut(self, type: str = "min") -> list:
         """
         Генерирует разбиение графа на два кластера.
