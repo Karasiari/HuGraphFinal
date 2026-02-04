@@ -1,4 +1,5 @@
 from typing import Optional, Dict, Tuple, List
+import copy
 
 import networkx as nx
 import numpy as np
@@ -67,9 +68,9 @@ def compute_alpha_for_edge(
 # функция для расширения графа
 
 def expand_graph(
-    graph: HuGraphForExps, 
+    graph: nx.MultiDiGraph, 
     source_target_sequence_to_add: List[EdgeWithParameter]
-) -> HuGraphForExps:
+) -> nx.MultiDiGraph:
     """
     Расширяет граф по списку новых ребер
     Input:
@@ -79,10 +80,12 @@ def expand_graph(
     Output:
           Расширенный граф
     """
+    expanded_graph = graph.copy()
     for edge, capacity in source_target_sequence_to_add:
         source, target = edge
-        graph.change_multiedge(source, target, type='insert', capacity=capacity)
-    return graph
+        expanded_graph.add_edge(source, target, capacity=capacity)
+        expanded_graph.add_edge(target, source, capacity=capacity)
+    return expanded_graph
 
 
 # функция для отдельного расчета части результатов решения исходного MCF
