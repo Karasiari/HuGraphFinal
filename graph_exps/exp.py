@@ -148,7 +148,7 @@ def allocation_test(
     graphs: Dict[str, nx.MultiDiGraph], 
     route_result: RouteResult,
     demands: DemandsDict,
-    edges_for_remaining_networks: Set[EdgeUnoriented],
+    edges_for_remaining_networks: Set[EdgeKey],
     tries_for_allocation: int,
     epsilon: float = 1.0,
     available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),),
