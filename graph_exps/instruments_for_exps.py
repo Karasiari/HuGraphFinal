@@ -129,7 +129,7 @@ def get_slack_graph(
             slack_by_edge[edge_unoriented] -= demand_volume
 
     slack_graph.add_nodes_from(graph)
-    slack_graph.add_edges_from([edge for _, edge in slack_by_edge.items()])
+    slack_graph.add_edges_from([(edge[0], edge[1], {"capacity": capacity})  for edge, capacity in slack_by_edge.items()])
     return slack_graph
     
 
