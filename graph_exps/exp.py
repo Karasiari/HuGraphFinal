@@ -246,6 +246,9 @@ def expand_test_for_graph(
     for allocation_type in allocation_types:
         expanded_graphs[allocation_type] = expand_network_for_type(multidigraph, edges_with_alphas, additional_resources, allocation_type)
 
+    # определяем, для каких ребер рассматриваем остаточные сети
+    #edges_for_remaining_networks = get_edges_for_remaining_networks(expanded_graphs, remaining_networks_pref, route_result, demands)
+
     # проводим эксперимент на расширенных графах
     allocation_results_raw = allocation_test(expanded_graphs, route_result, demands, tries_for_allocation, epsilon, available_volumes, random_seed)
 
