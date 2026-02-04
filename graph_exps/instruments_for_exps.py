@@ -88,6 +88,51 @@ def expand_graph(
     return expanded_graph
 
 
+# опциональная функция под выборку ребер в exp.py, для которых рассматриваем остаточные сети
+
+def get_slack_graph(
+    graph: nx.MultiDiGraph, 
+    route_result: RouteResult, 
+    demands: DemandsDict
+) -> nx.Graph:
+    """
+    Получаем остаточный граф для проложенного трафика - 
+    вспомогательная функция для выборки ребер в exp.py, 
+    для которых будем рассматривать остаточные сети в эксперименте
+    Input:
+          graph - расширенный граф, для которого ищем остаточный вариант
+          route_result - результат решения исходного MCF 
+                         как словарь проложенных по ребрам путей 
+                         по индексу запроса
+          demands - информация по проложенным в ходе решения исходного MCF запросам
+                    как словарь по индексу запроса
+    Output:
+          Возвращает остаточный граф как nx.Graph, 
+          агрегированный и неориентированный как подходящий формат
+    """
+    slack_graph: nx.Graph = nx.Graph()
+    slack_by_edge: Dict[EdgeKey, int] = {}
+    def get_unoriented_edge(u: int, v: int) -> EdgeKey:
+        return (min(u, v), max(u, v))
+
+    for u, v, data in graph.edges(data=True):
+        edge_unoriented = get_unoriented_edge(u, v)
+        if slack_by_edge.get(edge_unoriented, False):
+            slack_by_edge[edge_unoriented] += int(data['capacity'])
+        else:
+            slack_by_edge[edge_unoriented] = int(data['capacity'])
+    for demand_id, demand_path in route_result.items():
+        demand = demands[demand_id]
+        demand_volume = demand[2]
+        for u, v, _ in demand_path:
+            edge_unoriented = get_unoriented_edge(u, v)
+            slack_by_edge[edge_unoriented] -= demand_volume
+
+    slack_graph.add_nodes_from(graph)
+    slack_graph.add_edges_from([edge for _, edge in slack_by_edge.items()])
+    return slack_graph
+    
+
 # функция для удобного отдельного расчета части результатов решения исходного MCF
 
 def get_remaining_networks_and_volume_to_reroute(
@@ -105,7 +150,7 @@ def get_remaining_networks_and_volume_to_reroute(
           route_result - результат решения исходного MCF 
                          как словарь проложенных по ребрам путей 
                          по индексу запроса
-          demands - информация по проложенным запросам
+          demands - информация по проложенным в ходе решения исходного MCF запросам
                     как словарь по индексу запроса
     Output:
           Возвращает словарь остаточных сетей по EdgeKey ребра, 
