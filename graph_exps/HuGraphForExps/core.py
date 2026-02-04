@@ -167,7 +167,7 @@ class HuGraphForExps:
         if type not in {"min", "min_Lalpha"}:
             raise ValueError("type должен быть 'min' или 'min_Lalpha'")
 
-        if graph.demands_graph is None:
+        if self.demands_graph is None:
             raise AttributeError("demands_graph не задан")
 
         if type == "min":
