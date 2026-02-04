@@ -126,7 +126,7 @@ def check_params(
                 if not check(value):
                     raise ValueError(f"Недопустимое значение {param}: {value}")
     if recommended_params:
-        valid_params = {**params, **recommended}
+        valid_params = {**recommended, **params}
     else:
         valid_params = params
     return valid_params
