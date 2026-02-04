@@ -269,28 +269,29 @@ def get_right_output(
 def expand_test_for_graph(
     graph: HuGraphForExps, 
     additional_resources: List[float],
-    remaining_networks_pref: str = "all",
     allocation_types: List[str], 
     tries_for_allocation: int,
     epsilon: float = 1.0,
     available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),),
-    random_seed: int | None = None
+    random_seed: int | None = None,
+    remaining_networks_pref: str = "all"
 ) -> pd.DataFrame:
     """
     Функция для проведения основного эксперимента по расширению на одном графе
     Input:
           graph - граф для эксперимента ка объект класса HuGraphForExps
           additional_resources - список новых ресурсов как список capacity
-          remaining_networks_pref - тип выборки ребер, для которых рассматриваем 
-                                 остаточные сети в эксперименте
-                                 -- "all" - рассматриваем все сценарии
-                                 -- "mincuts" - рассматриваем ребра из разрезов 
-                                     остаточных по решению исходного MCF расширенных графов
           allocation_types - список типов распределения ресурсов
           tries_for_allocation - количество запусков алгоритма перепрокладки распределенных ресурсов
           epsilon - scaling параметр для алгоритма перепрокладки для резервирования дополнительных запросов
           available_volumes - распределение возможных весов резервных запросов в алгоритме перепрокладки 
                              как кортеж кортежей вида (значение, вероятность)
+          random_seed - для перепрокладки
+          remaining_networks_pref - тип выборки ребер, для которых рассматриваем 
+                                    остаточные сети в эксперименте
+                                    -- "all" - рассматриваем все сценарии
+                                    -- "mincuts" - рассматриваем ребра из разрезов 
+                                       остаточных по решению исходного MCF расширенных графов
     Output:
           табличка с результатами эксперимента как pandas DataFrame
     """
