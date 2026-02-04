@@ -17,7 +17,7 @@ from .HuGraphForExps.old import generate_cut
 EdgeWithParameter = Tuple[Tuple[int, int], float | None]
 RouteResult = Dict[int, List[Tuple[int, int, int]]]
 DemandsDict = Dict[int, Tuple[int, int, int]]
-EdgeUnoriented = Tuple[int, int]
+EdgeKey = Tuple[int, int]
 AllocationResult = Tuple[str, Tuple[bool, float]]
                                                                                                 
 
@@ -104,7 +104,7 @@ def get_edges_for_remaining_networks(
   remaining_networks_pref: str, 
   route_result: RouteResult, 
   demands: DemandsDict
-) -> Set[EdgeUnoriented]:
+) -> Set[EdgeKey]:
   """
   Функция для формирования выборки ребер, 
   для которых мы будем рассматривать остаточные сети в эксперименте
@@ -122,7 +122,7 @@ def get_edges_for_remaining_networks(
   Output:
         Множество ребер, для которых мы будем рассматривать остаточные сети в эксперименте
   """
-  edges_for_remaining_networks: Set[EdgeUnoriented] = {}
+  edges_for_remaining_networks: Set[EdgeKey] = {}
     
   for _, multidigraph in expanded_graphs.items():
     if remaining_networks_pref == "all":
@@ -142,13 +142,13 @@ def get_edges_for_remaining_networks(
   return edges_for_remaining_networks
       
   
-
 # функция для теста на перепрокладку при падении ребер
 
 def allocation_test(
     graphs: Dict[str, nx.MultiDiGraph], 
     route_result: RouteResult,
     demands: DemandsDict,
+    edges_for_remaining_networks: Set[EdgeUnoriented],
     tries_for_allocation: int,
     epsilon: float = 1.0,
     available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),),
@@ -170,6 +170,8 @@ def allocation_test(
                          по индексу запроса
           demands - информация по проложенным в ходе решения исходного MCF запросам
                     как словарь по индексу запроса
+          edges_for_remaining_networks - множество ребер, для которых мы будем рассматривать 
+                                         остаточные сети в эксперименте
           tries_for_allocation - количество запусков жадного алгоритма spare capacity allocation
           epsilon - scaling параметр для алгоритма перепрокладки для резервирования дополнительных запросов
           available_volumes - распределение возможных весов резервных запросов в алгоритме перепрокладки 
@@ -197,7 +199,7 @@ def allocation_test(
     remaining_networks_gammas_by_type = {}
     volume_to_reroute_by_type = {}
     for allocation_type, _, remaining_networks, volume_to_reroute in converted_results:
-      remaining_networks_by_failed_edge = [(edge, remaining_network) for edge, remaining_network in remaining_networks.items()]
+      remaining_networks_by_failed_edge = [(edge, remaining_network) for edge, remaining_network in remaining_networks.items() if edge in edges_for_remaining_networks]
       remaining_networks_gammas = Parallel(n_jobs=n_jobs)(
           delayed(solve_mcfp_for_exp)(edge, network)
           for edge, network in tqdm(remaining_networks_by_failed_edge, desc=f"Solving remaining network MCFPs for {allocation_type}", total=len(remaining_networks_by_failed_edge))
@@ -215,6 +217,7 @@ def allocation_test(
         for input_for_algorithm, allocation_type in tqdm(tasks_for_allocation, desc="Processing allocation", total=len(tasks_for_allocation))
     )
     return algorithm_results, remaining_networks_gammas_by_type, volume_to_reroute_by_type
+
 
 # функция для получения итоговых результатов эксперимента по графу в нужном формате
 
@@ -265,7 +268,8 @@ def get_right_output(
 
 def expand_test_for_graph(
     graph: HuGraphForExps, 
-    additional_resources: List[float], 
+    additional_resources: List[float],
+    remaining_networks_pref: str = "all",
     allocation_types: List[str], 
     tries_for_allocation: int,
     epsilon: float = 1.0,
@@ -277,6 +281,11 @@ def expand_test_for_graph(
     Input:
           graph - граф для эксперимента ка объект класса HuGraphForExps
           additional_resources - список новых ресурсов как список capacity
+          remaining_networks_pref - тип выборки ребер, для которых рассматриваем 
+                                 остаточные сети в эксперименте
+                                 -- "all" - рассматриваем все сценарии
+                                 -- "mincuts" - рассматриваем ребра из разрезов 
+                                     остаточных по решению исходного MCF расширенных графов
           allocation_types - список типов распределения ресурсов
           tries_for_allocation - количество запусков алгоритма перепрокладки распределенных ресурсов
           epsilon - scaling параметр для алгоритма перепрокладки для резервирования дополнительных запросов
@@ -298,10 +307,10 @@ def expand_test_for_graph(
         expanded_graphs[allocation_type] = expand_network_for_type(multidigraph, edges_with_alphas, additional_resources, allocation_type)
 
     # определяем, для каких ребер рассматриваем остаточные сети
-    #edges_for_remaining_networks = get_edges_for_remaining_networks(expanded_graphs, remaining_networks_pref, route_result, demands)
+    edges_for_remaining_networks = get_edges_for_remaining_networks(expanded_graphs, remaining_networks_pref, route_result, demands)
 
     # проводим эксперимент на расширенных графах
-    allocation_results_raw = allocation_test(expanded_graphs, route_result, demands, tries_for_allocation, epsilon, available_volumes, random_seed)
+    allocation_results_raw = allocation_test(expanded_graphs, route_result, demands, edges_for_remaining_networks, tries_for_allocation, epsilon, available_volumes, random_seed)
 
     # получаем нужный формат output
     allocation_results = get_right_output(allocation_results_raw)
