@@ -179,24 +179,24 @@ class HuGraphForExps:
             self.calculate_alpha()
             v = compute_least_nonzero_vector(self.L_alpha)
 
-         # используем медиану вектора для разбиения
-         med = float(np.median(v))
-         # создаём разметку вершин (0 или 1)
-         cluster_labels = (v <= med).astype(int)
+        # используем медиану вектора для разбиения
+        med = float(np.median(v))
+        # создаём разметку вершин (0 или 1)
+        cluster_labels = (v <= med).astype(int)
 
-         # список рёбер между кластерами (где метки разные)
-         edges_in_cut = []
+        # список рёбер между кластерами (где метки разные)
+        edges_in_cut = []
 
-         for u, v in self.graph.edges():
-             if cluster_labels[u] != cluster_labels[v]:
-                 edges_in_cut.append((u, v))
+        for u, v in self.graph.edges():
+            if cluster_labels[u] != cluster_labels[v]:
+                edges_in_cut.append((u, v))
             
-         if type == "min":
-             self.mincut = edges_in_cut
-         elif type == "min_Lalpha":
-             self.cut_alpha = edges_in_cut
+        if type == "min":
+            self.mincut = edges_in_cut
+        elif type == "min_Lalpha":
+            self.cut_alpha = edges_in_cut
 
-         return edges_in_cut
+        return edges_in_cut
 
     # ---------------------------
     # основные алгоритмы на графе
