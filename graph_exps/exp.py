@@ -127,13 +127,12 @@ def get_edges_for_remaining_networks(
       break
     elif remaining_networks_pref == "mincuts":
       slack_graph = get_slack_graph(multidigraph, route_result, demands)
-      almost_zero_traffic_graph = nx.MultiDiGraph()
-      almost_zero_traffic_graph.add_nodes_from(slack_graph)
-      #almost_zero_traffic_graph.add_edge(0, 1, weight=1.0)
-      slack_hugraph = HuGraphForExps(slack_graph, almost_zero_traffic_graph)
+      zero_traffic_graph = nx.MultiDiGraph()
+      zero_traffic_graph.add_nodes_from(slack_graph)
+      slack_hugraph = HuGraphForExps(slack_graph, zero_traffic_graph)
       edges_in_cut = slack_hugraph.generate_cut()
       for edge in edges_in_cut:
-        edges_for_remaining_networks.add(sorted(edge))
+        edges_for_remaining_networks.add(tuple(sorted(edge)))
     else:
       raise ValueError(f"Тип выборки {remaining_networks_pref} для ребер под остаточные сети не предусмотрен")
 
