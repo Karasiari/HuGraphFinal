@@ -132,6 +132,7 @@ def get_edges_for_remaining_networks(
       slack_graph = get_slack_graph(multidigraph, route_result, demands)
       zero_traffic_graph = nx.MultiDiGraph()
       zero_traffic_graph.add_nodes_from(slack_graph)
+      zero_traffic_graph.add_edge((0, 1, {"weight": 1.0}))
       slack_hugraph = HuGraphForExps(slack_graph, zero_traffic_graph)
       edges_in_cut = slack_hugraph.generate_cut()
       for edge in edges_in_cut:
