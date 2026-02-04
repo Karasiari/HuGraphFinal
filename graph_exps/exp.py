@@ -134,7 +134,8 @@ def get_edges_for_remaining_networks(
       almost_zero_traffic_graph.add_nodes_from(slack_graph)
       almost_zero_traffic_graph.add_edge(0, 1, weight=1.0)
       slack_hugraph = HuGraphForExps(slack_graph, almost_zero_traffic_graph)
-      edges_in_cut = slack_hugraph.generate_cut(slack_hugraph)
+      raise ValueError(f"{slack_hugraph.demands_laplacian}")
+      edges_in_cut = slack_hugraph.generate_cut()
       for edge in edges_in_cut:
         edges_for_remaining_networks.add(sorted(edge))
     else:
