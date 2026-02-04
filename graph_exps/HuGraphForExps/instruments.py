@@ -87,19 +87,15 @@ def aggregate_graph(multigraph: nx.MultiGraph | nx.MultiDiGraph, weight_name: st
     - Сохраняет все вершины исходного графа
     - Если между вершинами нет рёбер, они не будут соединены в результате
     """
-    # Создаём пустой неориентированный граф с теми же вершинами
     G = nx.Graph()
     G.add_nodes_from(range(multigraph.number_of_nodes())) # Сохраняем все вершины
 
-    # Проходим по всем рёбрам мультиграфа
     for u, v, data in multigraph.edges(data=True):
       weight = data[weight_name]
 
       if G.has_edge(u, v):
-          # Если ребро уже существует, суммируем вес
           G[u][v]['weight'] += weight
       else:
-          # Создаём новое ребро с заданным весом
           G.add_edge(u, v, weight=weight)
 
     return G
@@ -130,3 +126,43 @@ def get_pinv_sqrt(laplacian: np.ndarray) -> np.ndarray:
     L_pinv = np.linalg.pinv(laplacian)
     L_pinv_sqrt = fractional_matrix_power(L_pinv, 0.5)
     return L_pinv_sqrt
+
+def compute_least_nonzero_vector(L: np.ndarray) -> np.ndarray:
+    """
+    Вычисляет собственный вектор, соответствующий минимальному ненулевому собственному значению матрицы Лапласа.
+    
+    Для связного графа спектр матрицы Лапласа содержит одно нулевое собственное значение,
+    соответствующее постоянному вектору. Следующее (наименьшее ненулевое) собственное значение
+    и его собственный вектор (вектор Фидлера) несут информацию о структуре графа
+    и используются в задачах спектральной кластеризации, разделения графов и анализа связности.
+    
+    Математически: v = argmin_{v⊥1, ||v||=1} vᵀLv, где 1 - вектор из единиц.
+    
+    Parameters
+    ----------
+    L : np.ndarray
+        Матрица Лапласа графа (симметричная, положительно полуопределённая).
+        Должна быть вещественной и симметричной для гарантии вещественных собственных значений.
+        
+    Returns
+    -------
+    np.ndarray
+        Вектор Фидлера (Fiedler vector) - собственный вектор, соответствующий 
+        второму наименьшему собственному значению (algebraic connectivity).
+        Вектор нормирован (||v||₂ = 1) и ортогонален постоянному вектору.
+        
+    Warnings
+    --------
+    - Матрица L должна быть симметричной, иначе np.linalg.eigh может выдать ошибку
+    - Для больших разреженных матриц используйте scipy.sparse.linalg.eigsh
+    - Численная точность зависит от обусловленности матрицы и величины зазора в спектре
+    - Нулевое собственное значение может быть вычислено с малой погрешностью,
+      поэтому используется порог eps = 1e-12 для отделения нулевых значений
+    """
+    eigenvalues, eigenvectors = np.linalg.eigh(L)
+    eps = 1e-12
+    nonzero_indices = np.where(eigenvalues > eps)[0]
+    idx = nonzero_indices[0]
+    least_nonzero_vector = eigenvectors[:, idx]
+
+    return least_nonzero_vector
