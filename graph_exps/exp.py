@@ -10,10 +10,14 @@ from joblib import Parallel, delayed
 # импорт вспомогательных функций
 from .instruments_for_exps import *
 
+# опциональный импорт функции для выборки ребер, для которых рассматриваем остаточные сети в эксперименте
+from .HuGraphForExps.old import generate_cut
+
 # алиасы для читаемости
 EdgeWithParameter = Tuple[Tuple[int, int], float | None]
 RouteResult = Dict[int, List[Tuple[int, int, int]]]
 DemandsDict = Dict[int, Tuple[int, int, int]]
+EdgeUnoriented = Tuple[int, int]
 AllocationResult = Tuple[str, Tuple[bool, float]]
                                                                                                 
 
@@ -91,6 +95,53 @@ def expand_network_for_type(
     graph_copy_to_expand = graph.copy()
     expanded_graph = expand_graph(graph_copy_to_expand, source_target_sequence_for_new_resources)
     return expanded_graph
+
+
+# функция для выборки ребер, для которых мы будем рассматривать остаточные сети в ходе эксперимента
+
+def get_edges_for_remaining_networks(
+  expanded_graphs: Dict[str, nx.MultiDiGraph], 
+  remaining_networks_pref: str, 
+  route_result: RouteResult, 
+  demands: DemandsDict
+) -> Set[EdgeUnoriented]:
+  """
+  Функция для формирования выборки ребер, 
+  для которых мы будем рассматривать остаточные сети в эксперименте
+  Input:
+        expanded_graphs - словарь расширенных графов
+        remaining_networks_pref - тип выборки ребер
+                                -- "all" - рассматриваем все сценарии
+                                -- "mincuts" - рассматриваем ребра из разрезов 
+                                    остаточных по решению исходного MCF расширенных графов
+        route_result - результат решения исходного MCF 
+                       как словарь проложенных по ребрам путей 
+                       по индексу запроса
+        demands - информация по проложенным в ходе решения исходного MCF запросам
+                  как словарь по индексу запроса
+  Output:
+        Множество ребер, для которых мы будем рассматривать остаточные сети в эксперименте
+  """
+  edges_for_remaining_networks: Set[EdgeUnoriented] = {}
+    
+  for _, multidigraph in expanded_graphs.items():
+    if remaining_networks_pref == "all":
+      edges_for_remaining_networks = {tuple(sorted(edge[:2])) for edge in multidigraph.edges()}
+      break
+    elif remaining_networks_pref == "mincuts":
+      slack_graph = get_slack_graph(multidigraph, route_result, demands)
+      zero_traffic_graph = nx.MultiDiGraph()
+      zero_traffic_graph.add_nodes_from(slack_graph)
+      slack_hugraph = HuGraphsForExps(slack_graph, zero_traffic_graph)
+      edges_in_cut = slack_hugraph.generate_cut()
+      for edge in edges_in_cut:
+        edges_for_remaining_networks.add(sorted(edge))
+    else:
+      raise ValueError(f"Тип выборки {remaining_networks_pref} для ребер под остаточные сети не предусмотрен")
+
+  return edges_for_remaining_networks
+      
+  
 
 # функция для теста на перепрокладку при падении ребер
 
