@@ -139,7 +139,7 @@ def allocation_test(
       tasks_for_converting.append((graph, route_result, demands, allocation_type, epsilon, available_volumes))
     converted_results = Parallel(n_jobs=n_jobs)(
        delayed(convert_mcf_results_for_exp)(graph, route_result, demands, allocation_type, epsilon, available_volumes)
-       for graph, route_result, demands, allocation_type, epsilon, available_values in tqdm(tasks_for_mcf, desc="Converting initial MCF results", total=len(tasks_for_converting))
+       for graph, route_result, demands, allocation_type, epsilon, available_values in tqdm(tasks_for_converting, desc="Converting initial MCF results", total=len(tasks_for_converting))
     )
 
     # параллельно считаем gamma для остаточных сетей
