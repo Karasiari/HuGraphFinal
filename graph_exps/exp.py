@@ -64,6 +64,23 @@ def expand_network_for_type(
     Output:
            расширенный граф
     """
+  
+    def filter_edges(edges, min_ratio, max_ratio):
+      if min_ratio < 0 or max_ratio > 1 or min_ratio > max_ratio:
+        raise ValueError("Некорректные значения min и max")
+    
+      sorted_edges = sorted(edges, key=lambda x: x[1])
+      n = len(sorted_edges)
+    
+      min_count = int(n * min_ratio)
+      max_count = int(n * max_ratio)
+    
+      start_index = min_count
+      end_index = n - max_count
+      if start_index >= end_index:
+        return sorted_edges[start_index:end_index]
+      return sorted_edges[start_index:end_index]
+  
     number_of_new_resources = len(resources_to_add)
     # добавляем новые ресурсы предпочтительно по значению метрики α ребра
     if allocation_type == "alpha":
@@ -84,6 +101,13 @@ def expand_network_for_type(
         random.shuffle(edges_with_alphas)
         edges_to_expand = [edge for edge, _ in edges_with_alphas[:number_of_new_resources]]
         source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add))
+
+    # пробный тип
+    elif allocation_type == "random_mid_alpha":
+        mid_edges = filter_edges(edges_with_alphas, 0.6, 0.2)
+        random.shuffle(mid_edges)
+        edges_to_expand = [edge for edge, _ in mid_edges[:number_of_new_resources]]
+        source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add)) 
     else:
         raise ValueError(f"Тип распределения ресурсов {allocation_type} не предусмотрен экспериментом")
 
