@@ -102,7 +102,7 @@ def expand_network_for_type(
 
     # пробный тип
     elif allocation_type == "random_mid_alpha":
-        mid_edges = filter_edges(edges_with_alphas, 0.0, 0.7)
+        mid_edges = filter_edges(edges_with_alphas, 0.8, 0.0)
         random.shuffle(mid_edges)
         edges_to_expand = [edge for edge, _ in mid_edges[:number_of_new_resources]]
         source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add)) 
