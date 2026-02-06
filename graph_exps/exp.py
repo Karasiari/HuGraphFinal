@@ -66,7 +66,7 @@ def expand_network_for_type(
     """
   
     def filter_edges(edges, min_ratio, max_ratio):
-      if min_ratio < 0 or max_ratio > 1 or min_ratio > max_ratio:
+      if min_ratio < 0 or max_ratio > 1:
         raise ValueError("Некорректные значения min и max")
     
       sorted_edges = sorted(edges, key=lambda x: x[1])
@@ -77,8 +77,6 @@ def expand_network_for_type(
     
       start_index = min_count
       end_index = n - max_count
-      if start_index >= end_index:
-        return sorted_edges[start_index:end_index]
       return sorted_edges[start_index:end_index]
   
     number_of_new_resources = len(resources_to_add)
