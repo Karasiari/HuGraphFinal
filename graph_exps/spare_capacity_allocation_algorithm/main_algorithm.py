@@ -38,6 +38,7 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
     routed = PositiveTouchedArray.zeros(edge_count)
 
     reserve_paths_by_failed_edge: Dict[Tuple[Node, Node], Dict[DemandID, EdgePath]] = {}
+    additional_volume_by_edge: Dict[Tuple[Node, Node], float] = {}
     algorithm_failure_flag: bool = False
 
     for failed_agg_edge_idx in failure_agg_edge_indices:
@@ -87,9 +88,10 @@ def run_greedy_spare_capacity_allocation(input_data: SpareCapacityGreedyInput) -
             u_for_key, v_for_key = min(failed_edge_key[0], failed_edge_key[1]), max(failed_edge_key[0], failed_edge_key[1])
             reserve_paths_by_failed_edge[(u_for_key, v_for_key)] = demand_to_backup_path
 
-    additional_volume_by_edge = {
-        instance.edge_key_by_index[edge_idx]: add_by_edge[edge_idx] for edge_idx in range(edge_count)
-    }
+    for edge_idx in range(edge_count):
+        u, v, key = instance.edge_key_by_index[edge_idx]
+        u_for_key, v_for_key = min(u, v), max(u, v)
+        additional_volume_by_edge[u_for_key, v_for_key] = additional_volume_by_edge.get((u_for_key, v_for_key), 0.0) + add_by_edge[edge_idx]
 
     return SpareCapacityGreedyOutput(
         algorithm_failure_flag=algorithm_failure_flag,
