@@ -13,7 +13,8 @@ EdgeWithParameter = Tuple[Tuple[int, int], float | None]
 RouteResult = Dict[int, List[Tuple[int, int, int]]]
 DemandsDict = Dict[int, Tuple[int, int, int]]
 EdgeKey = Tuple[int, int]
-AllocationResult = Tuple[str, Tuple[bool, float]]
+AddVolumeByEdge = Dict[EdgeKey, int]
+AllocationResult = Tuple[str, Tuple[bool, float, AddVolumeByEdge]]
                                                                                                 
 
 # функция для расчета метрики α для ВСЕХ ребер графа
