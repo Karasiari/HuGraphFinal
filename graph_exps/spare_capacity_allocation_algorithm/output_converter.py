@@ -1,6 +1,6 @@
 """Convert SpareCapacityGreedyOutput into data format needed for main test"""
 
-from typing import Tuple
+from typing import Tuple, Dict
 
 from .classes_for_algorithm import (
     SpareCapacityGreedyOutput
