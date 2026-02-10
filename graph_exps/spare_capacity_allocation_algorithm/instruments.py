@@ -10,7 +10,7 @@ def build_indexed_graph(edge_inputs: Sequence[EdgeInput]) -> Tuple[nx.MultiDiGra
     indexes_by_agg_index: Dict[int, List[int]] = {}
     edge_key_by_index: List[EdgeKey] = []
     capacity_by_edge: List[int] = []
-    seen: Dict[Tuple[Node, Node], int] = {}
+    seen: Dict[EdgeAgg, int] = {}
 
     new_agg_index = 0
     for edge in edge_inputs:
