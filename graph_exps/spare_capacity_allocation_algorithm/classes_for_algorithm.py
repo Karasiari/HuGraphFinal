@@ -9,8 +9,8 @@ DemandID = NewType("DemandID", int)
 EdgeId = NewType("EdgeID", int)
 Node = Hashable
 EdgeKey = Tuple[Node, Node, int]
-OrientedEdge = Tuple[Node, Node, int]
-EdgePath = List[OrientedEdge]
+EdgeAgg = Tuple[Node, Node]
+EdgePath = List[EdgeKey]
 VolumeWithProbabilty = Tuple[int, float]
 
 @dataclass(frozen=True, slots=True)
@@ -34,7 +34,7 @@ class DemandInput:
     source: Node
     target: Node
     volume: int
-    initial_edge_path: Sequence[OrientedEdge]
+    initial_edge_path: Sequence[EdgeKey]
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,8 +71,8 @@ class SpareCapacityGreedyOutput:
     """
     algorithm_failure_flag: bool
     successfully_rerouted_demands_volume: float
-    additional_volume_by_edge: Dict[EdgeKey, int]
-    reserve_paths_by_failed_edge: Dict[EdgeKey, Dict[DemandID, EdgePath]]
+    additional_volume_by_edge: Dict[EdgeAgg, int]
+    reserve_paths_by_failed_edge: Dict[EdgeAgg, Dict[DemandID, EdgePath]]
 
 
 # ----------------------------
