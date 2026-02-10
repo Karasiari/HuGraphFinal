@@ -12,13 +12,13 @@ from .classes_for_algorithm import (
     DemandID,
     DemandInput,
     EdgeInput,
-    OrientedEdge,
+    EdgeKey,
     VolumeWithProbabilty,
     SpareCapacityGreedyInput
 )
 
 
-def _get_edge_capacities(graph: nx.MultiDiGraph) -> Dict[Tuple[int, int, int], int]:
+def _get_edge_capacities(graph: nx.MultiDiGraph) -> Dict[EdgeKey, int]:
     """Get edge capacities for a directed version of a graph: 
     for each multiedge exists its doubled (capacity) version with different direction
 
@@ -29,7 +29,7 @@ def _get_edge_capacities(graph: nx.MultiDiGraph) -> Dict[Tuple[int, int, int], i
 
     Returns
     -------
-    Dict[Tuple[int, int, int], int]
+    Dict[EdgeKey, int]
         Mapping from canonical edge key (source, target, key) to total capacity.
     """
     capacities: Dict[Tuple[int, int, int], int] = {}
@@ -43,7 +43,7 @@ def _get_edge_capacities(graph: nx.MultiDiGraph) -> Dict[Tuple[int, int, int], i
     return capacities
 
 
-def _build_edge_inputs(capacities: Dict[Tuple[int, int, int], int]) -> List[EdgeInput]:
+def _build_edge_inputs(capacities: Dict[EdgeKey, int]) -> List[EdgeInput]:
     """Create EdgeInput list from capacities.
 
     Parameters
@@ -64,7 +64,7 @@ def _build_edge_inputs(capacities: Dict[Tuple[int, int, int], int]) -> List[Edge
 
 def _build_demand_inputs(
     demands: Dict[int, Tuple[int, int, int]],
-    route_result: Dict[int, List[Tuple[int, int, int]]],
+    route_result: Dict[int, List[EdgeKey]],
 ) -> List[DemandInput]:
     """Create DemandInput list from routed demands.
 
@@ -103,7 +103,7 @@ def _build_demand_inputs(
 def convert_to_greedy_input(
     graph: nx.MultiDiGraph,
     demands: Dict[int, Tuple[int, int, int]],
-    route_result: Dict[int, List[Tuple[int, int, int]]],
+    route_result: Dict[int, List[EdgeKey]],
     epsilon: float = 1.0,
     available_volumes: Tuple[VolumeWithProbabilty, ...] = ((1, 1.0),),
     random_seed: int | None = None,
