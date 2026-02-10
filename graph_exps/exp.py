@@ -277,7 +277,7 @@ def get_right_output(
     for allocation_type, remaining_networks_gammas in remaining_networks_gammas_by_type.items():
       gammas_dict[allocation_type] = {}
       for edge, remaining_network_gamma in remaining_networks_gammas:
-        gammas_dict[allocation_type][f'gamma for failed {edge}'] = round(remaining_network_gamma, 2)
+        gammas_dict[allocation_type][f'gamma for failed {edge}'] = round(remaining_network_gamma, 2) if remaining_network_gamma is not None else None
   
     for allocation_type, result_raw in algorithm_results:
       result = {'allocation solved': result_raw[0], 'rerouted volume ratio': round(result_raw[1] / volume_to_reroute_by_type[allocation_type], 2)}
