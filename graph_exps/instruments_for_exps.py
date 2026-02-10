@@ -8,8 +8,9 @@ from .HuGraphForExps.core import HuGraphForExps
 
 # алиасы для читаемости
 EdgeKey = Tuple[int, int]
-EdgeWithParameter = Tuple[Tuple[int, int], float | None]
-AllocationResult = Tuple[str, Tuple[bool, float]]
+EdgeWithParameter = Tuple[EdgeKey, float | None]
+AddVolumeByEdge = Dict[EdgeKey, int]
+AllocationResult = Tuple[str, Tuple[bool, float, AddVolumeByEdge]]
 RouteResult = Dict[int, List[Tuple[int, int, int]]]
 DemandsDict = Dict[int, Tuple[int, int, int]]
 RemainingNetwork = Tuple[nx.DiGraph, nx.MultiDiGraph]
