@@ -236,8 +236,12 @@ def allocation_test(
     for allocation_type, input_for_algorithm, _, _ in converted_results:
       initial_random_seed = input_for_algorithm.random_seed
       for try_number in range(tries_for_allocation):
-        input_for_algorithm.random_seed = initial_random_seed + try_number
-        tasks_for_allocation.append((input_for_algorithm, allocation_type))
+        random_seed_for_try = initial_random_seed + try_number if initial_random_seed is not None else None
+        new_input = dataclasses.replace(
+          input_for_algorithm, 
+          random_seed=random_seed_for_try
+        )
+        tasks_for_allocation.append((new_input, allocation_type))
     algorithm_results = Parallel(n_jobs=n_jobs)(
         delayed(allocate_spare_capacity)(input_for_algorithm, allocation_type)
         for input_for_algorithm, allocation_type in tqdm(tasks_for_allocation, desc="Processing allocation", total=len(tasks_for_allocation))
