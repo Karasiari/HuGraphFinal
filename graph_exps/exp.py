@@ -238,7 +238,7 @@ def allocation_test(
       initial_random_seed = input_for_algorithm.random_seed
       for try_number in range(tries_for_allocation):
         random_seed_for_try = initial_random_seed + try_number if initial_random_seed is not None else None
-        new_input = dataclasses.replace(
+        new_input = replace(
           input_for_algorithm, 
           random_seed=random_seed_for_try
         )
