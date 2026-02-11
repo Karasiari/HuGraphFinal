@@ -199,6 +199,7 @@ def allocation_test(
           epsilon - scaling параметр для алгоритма перепрокладки для резервирования дополнительных запросов
           available_volumes - распределение возможных весов резервных запросов в алгоритме перепрокладки 
                              как кортеж кортежей вида (значение, вероятность)
+          random_seed
           n_jobs
     Output:
           algorithm_results - результаты решений задачи перепрокладки
@@ -212,10 +213,10 @@ def allocation_test(
     # преобразуем решение исходного MCF и находим остаточные сети
     tasks_for_converting = []
     for allocation_type, graph in graphs.items():
-      tasks_for_converting.append((graph, route_result, demands, allocation_type, epsilon, available_volumes))
+      tasks_for_converting.append((graph, route_result, demands, allocation_type, epsilon, available_volumes, random_seed))
     converted_results = Parallel(n_jobs=n_jobs)(
-       delayed(convert_mcf_results_for_exp)(graph, route_result, demands, allocation_type, epsilon, available_volumes)
-       for graph, route_result, demands, allocation_type, epsilon, available_values in tqdm(tasks_for_converting, desc="Converting initial MCF results", total=len(tasks_for_converting))
+       delayed(convert_mcf_results_for_exp)(graph, route_result, demands, allocation_type, epsilon, available_volumes, random_seed)
+       for graph, route_result, demands, allocation_type, epsilon, available_values, random_seed in tqdm(tasks_for_converting, desc="Converting initial MCF results", total=len(tasks_for_converting))
     )
 
     # параллельно считаем gamma для остаточных сетей
