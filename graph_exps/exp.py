@@ -234,7 +234,9 @@ def allocation_test(
     # параллельно запускаем алгоритм spare capacity allocation
     tasks_for_allocation = []
     for allocation_type, input_for_algorithm, _, _ in converted_results:
+      inititial_random_seed = input_for_algorithm.random_seed
       for try_number in range(tries_for_allocation):
+        input_for_algorithm.random_seed = initial_random_seed + try_number
         tasks_for_allocation.append((input_for_algorithm, allocation_type))
     algorithm_results = Parallel(n_jobs=n_jobs)(
         delayed(allocate_spare_capacity)(input_for_algorithm, allocation_type)
