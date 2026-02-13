@@ -145,6 +145,7 @@ def expand_network_for_type(
       return sorted_edges[start_index:end_index]
   
     number_of_new_resources = len(resources_to_add)
+    resources_to_add.sort(reverse=True)
     # добавляем новые ресурсы предпочтительно по значению метрики α ребра
     if allocation_type == "alpha":
         edges_with_alphas.sort(key=lambda x: x[1], reverse=True)
@@ -176,10 +177,16 @@ def expand_network_for_type(
         random.shuffle(mid_edges)
         edges_to_expand = [edge for edge, _ in mid_edges[:number_of_new_resources]]
         source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add)) 
+      
     elif allocation_type == "alpha_with_support":
         support_edges_dict = {}
         for edge, unexpanded_remaining_network in unexpanded_remaining_networks.items():
           support_edges_dict[edge] = get_support_edge(unexpanded_remaining_network)
+        source_target_sequence_for_new_resources = []
+        current_edge_to_expand = edges_with_alphas[0][0]
+        for resource in resources_to_add:
+          source_target_sequence_for_new_resources.append((current_edge_to_expand, resource))
+          current_edge_to_expand = support_edges_dict[current_edge_to_expand]
     else:
         raise ValueError(f"Тип распределения ресурсов {allocation_type} не предусмотрен экспериментом")
 
