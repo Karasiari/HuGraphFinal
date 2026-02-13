@@ -93,9 +93,11 @@ def get_support_edge(
     Output:
           Саппорт ребро основного ребра как EdgeKey
     """
-    remaining_network_topology_graph = remaining_network[0].copy()
-    for u, v, data in remaining_network_topology_graph.edges(data=True):
-      data['capacity'] = data.pop('weight')
+    remaining_network_topology_digraph = remaining_network[0].copy()
+    remaining_network_topology_graph = nx.MultiGraph()
+    remaining_network_topology_graph.add_nodes_from(remaining_network_topology_digraph)
+    for u, v, data in remaining_network_topology_digraph.edges(data=True):
+      remaining_network_topology_graph.add_edge(u, v, capacity=data['weight'])
     remaining_network_traffic_graph = remaining_network[1].copy()
     remaining_graph = HuGraphForExps(remaining_network_topology_graph, remaining_network_traffic_graph)
   
