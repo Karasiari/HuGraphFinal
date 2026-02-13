@@ -154,6 +154,8 @@ def expand_network_for_type(
         random.shuffle(mid_edges)
         edges_to_expand = [edge for edge, _ in mid_edges[:number_of_new_resources]]
         source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add)) 
+    elif allocation_type == "alpha_with_support";
+        continue
     else:
         raise ValueError(f"Тип распределения ресурсов {allocation_type} не предусмотрен экспериментом")
 
