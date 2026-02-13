@@ -66,6 +66,89 @@ def compute_alpha_for_edge(
     return (source, target), alpha
 
 
+# функция для удобного отдельного расчета части результатов решения исходного MCF
+
+def get_remaining_networks_and_volume_to_reroute(
+    graph: nx.MultiDiGraph, 
+    route_result: RouteResult, 
+    demands: DemandsDict
+) -> Tuple[Dict[EdgeKey, RemainingNetwork], int]:
+    """
+    По результатам решения исходного MCF на графе 
+    производит расчет нужных для основного эксперимента 
+    частей этого решения - смотри Output
+    Input:
+          graph - нерасширенная версия графа, 
+                  на котором проводится эксперимент
+          route_result - результат решения исходного MCF 
+                         как словарь проложенных по ребрам путей 
+                         по индексу запроса
+          demands - информация по проложенным в ходе решения исходного MCF запросам
+                    как словарь по индексу запроса
+    Output:
+          Возвращает словарь нерасширенных остаточных сетей 
+          по EdgeKey ребра, для которого остаточная сеть считается,
+          остаточная сеть - кортеж из 
+                            графа оставшихся по capacity ребер (по решению MCF и упавшим запросам)
+                            и графа запросов, упавших при падении ребра;
+          второй output - суммарный volume запросов для потенциальной перепрокладки
+                          для ВСЕХ сценариев падений ребер
+    """
+    slack_by_edge: Dict[EdgeKey, int] = {}
+    demands_through_edge: Dict[EdgeKey, List[int]] = {}
+    unique_edges: Dict[EdgeKey, bool] = {}
+    remaining_networks: Dict[EdgeKey, RemainingNetwork] = {}
+    volume_to_reroute: int = 0
+
+    for u, v, data in graph.edges(data=True):
+        edge_oriented = (u, v)
+        edge_unoriented = min(u, v), max(u, v)
+        if not unique_edges.get(edge_unoriented, False):
+            unique_edges[edge_unoriented] = True
+        if slack_by_edge.get(edge_oriented, False):
+            slack_by_edge[edge_oriented] += int(data['capacity'])
+        else:
+            slack_by_edge[edge_oriented] = int(data['capacity'])
+    for demand_id, demand_path in route_result.items():
+        demand = demands[demand_id]
+        demand_volume = demand[2]
+        for u, v, _ in demand_path:
+            edge_oriented = (u, v)
+            slack_by_edge[edge_oriented] -= demand_volume
+            if demands_through_edge.get(edge_oriented, False):
+                demands_through_edge[edge_oriented].append(demand_id)
+            else:
+                demands_through_edge[edge_oriented] = [demand_id]
+
+    for edge_unoriented, _ in unique_edges.items():
+        slack_graph = nx.DiGraph()
+        slack_demands_graph = nx.MultiDiGraph()
+        slack_graph.add_nodes_from(graph)
+        slack_demands_graph.add_nodes_from(graph)
+        edge_reversed = edge_unoriented[1], edge_unoriented[0]
+        affected_demands_ids = demands_through_edge.get(edge_unoriented, []) + demands_through_edge.get(edge_reversed, [])
+        affected_demands = []
+        edges = slack_by_edge.copy()
+        edges_list = []
+        for demand_id in affected_demands_ids:
+            affected_demand = demands[demand_id]
+            source, target, capacity = affected_demand
+            volume_to_reroute += capacity
+            affected_demands.append((source, target, {"weight": capacity}))
+            edges_to_restore = route_result[demand_id]
+            for u, v, _ in edges_to_restore:
+                edge_oriented = (u, v)
+                edges[edge_oriented] += capacity
+        for edge_oriented, capacity in edges.items():
+            if edge_oriented not in (edge_unoriented, edge_reversed):
+                edges_list.append((edge_oriented[0], edge_oriented[1], {"weight": capacity}))
+        slack_graph.add_edges_from(edges_list)
+        slack_demands_graph.add_edges_from(affected_demands)
+        remaining_networks[edge_unoriented] = (slack_graph, slack_demands_graph)
+    
+    return remaining_networks, volume_to_reroute
+
+
 # функция для расширения графа
 
 def expand_graph(
@@ -132,89 +215,6 @@ def get_slack_graph(
     slack_graph.add_nodes_from(graph)
     slack_graph.add_edges_from([(edge[0], edge[1], {"capacity": capacity})  for edge, capacity in slack_by_edge.items()])
     return slack_graph
-    
-
-# функция для удобного отдельного расчета части результатов решения исходного MCF
-
-def get_remaining_networks_and_volume_to_reroute(
-    graph: nx.MultiDiGraph, 
-    route_result: RouteResult, 
-    demands: DemandsDict
-) -> Tuple[Dict[EdgeKey, RemainingNetwork], int]:
-    """
-    По результатам решения исходного MCF на графе 
-    производит расчет нужных для основного эксперимента 
-    частей этого решения - смотри Output
-    Input:
-          graph - расширенная версия графа, 
-                  на котором проводится эксперимент
-          route_result - результат решения исходного MCF 
-                         как словарь проложенных по ребрам путей 
-                         по индексу запроса
-          demands - информация по проложенным в ходе решения исходного MCF запросам
-                    как словарь по индексу запроса
-    Output:
-          Возвращает словарь остаточных сетей по EdgeKey ребра, 
-          для которого остаточная сеть считается,
-          остаточная сеть - кортеж из 
-                            графа оставшихся по capacity ребер (по решению MCF и упавшим запросам)
-                            и графа запросов, упавших при падении ребра;
-          второй output - суммарный volume запросов для потенциальной перепрокладки
-                          для ВСЕХ сценариев падений ребер
-    """
-    slack_by_edge: Dict[EdgeKey, int] = {}
-    demands_through_edge: Dict[EdgeKey, List[int]] = {}
-    unique_edges: Dict[EdgeKey, bool] = {}
-    remaining_networks: Dict[EdgeKey, RemainingNetwork] = {}
-    volume_to_reroute: int = 0
-
-    for u, v, data in graph.edges(data=True):
-        edge_oriented = (u, v)
-        edge_unoriented = min(u, v), max(u, v)
-        if not unique_edges.get(edge_unoriented, False):
-            unique_edges[edge_unoriented] = True
-        if slack_by_edge.get(edge_oriented, False):
-            slack_by_edge[edge_oriented] += int(data['capacity'])
-        else:
-            slack_by_edge[edge_oriented] = int(data['capacity'])
-    for demand_id, demand_path in route_result.items():
-        demand = demands[demand_id]
-        demand_volume = demand[2]
-        for u, v, _ in demand_path:
-            edge_oriented = (u, v)
-            slack_by_edge[edge_oriented] -= demand_volume
-            if demands_through_edge.get(edge_oriented, False):
-                demands_through_edge[edge_oriented].append(demand_id)
-            else:
-                demands_through_edge[edge_oriented] = [demand_id]
-
-    for edge_unoriented, _ in unique_edges.items():
-        slack_graph = nx.DiGraph()
-        slack_demands_graph = nx.MultiDiGraph()
-        slack_graph.add_nodes_from(graph)
-        slack_demands_graph.add_nodes_from(graph)
-        edge_reversed = edge_unoriented[1], edge_unoriented[0]
-        affected_demands_ids = demands_through_edge.get(edge_unoriented, []) + demands_through_edge.get(edge_reversed, [])
-        affected_demands = []
-        edges = slack_by_edge.copy()
-        edges_list = []
-        for demand_id in affected_demands_ids:
-            affected_demand = demands[demand_id]
-            source, target, capacity = affected_demand
-            volume_to_reroute += capacity
-            affected_demands.append((source, target, {"weight": capacity}))
-            edges_to_restore = route_result[demand_id]
-            for u, v, _ in edges_to_restore:
-                edge_oriented = (u, v)
-                edges[edge_oriented] += capacity
-        for edge_oriented, capacity in edges.items():
-            if edge_oriented not in (edge_unoriented, edge_reversed):
-                edges_list.append((edge_oriented[0], edge_oriented[1], {"weight": capacity}))
-        slack_graph.add_edges_from(edges_list)
-        slack_demands_graph.add_edges_from(affected_demands)
-        remaining_networks[edge_unoriented] = (slack_graph, slack_demands_graph)
-    
-    return remaining_networks, volume_to_reroute
     
 
 # функция для обработки решения исходного MCF в рамках эксперимента - под параллелизацию в exp.py
