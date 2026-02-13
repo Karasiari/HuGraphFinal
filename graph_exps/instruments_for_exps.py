@@ -217,45 +217,40 @@ def get_slack_graph(
     return slack_graph
     
 
-# функция для обработки решения исходного MCF в рамках эксперимента - под параллелизацию в exp.py
+# функция для обработки решения исходного MCF под формат входа spare capacity algorithm - под параллелизацию в exp.py
 
-def convert_mcf_results_for_exp(
+def convert_mcf_results_to_greedy_input(
     graph: nx.MultiDiGraph, 
-    route_result: RouteResult,
+    allocation_type: str,
     demands: DemandsDict,
-    allocation_type: str, 
+    route_result: RouteResult,
     epsilon: float = 1.0, 
     available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),), 
     random_seed: int | None = None
-) -> Tuple[str, SpareCapacityGreedyInput, Dict[EdgeKey, RemainingNetwork], int]:
+) -> Tuple[str, SpareCapacityGreedyInput]:
     """
-    Обрабатывает решение исходной задачи MCF на нерасширенном графе
-    под алгоритм spare capacity allocation
+    Обрабатывает решение исходной задачи MCF под формат входа 
+    в алгоритм spare capacity allocation
     Input:
           graph - расширенная версия графа, 
-                  на котором проводится эксперимент;
-                  результаты обрабатываются на расширенном
+                  на котором проводится эксперимент
+          allocation_type - тип расширения 
+                            (для удобного output)
+          demands - информация по проложенным в ходе решения исходного MCF запросам
+                    как словарь по индексу запроса
           route_result - результат решения исходного MCF 
                          как словарь проложенных по ребрам путей 
                          по индексу запроса
-          demands - информация по проложенным в ходе решения исходного MCF запросам
-                    как словарь по индексу запроса
-          allocation_type - тип расширения 
-                            (для удобного output)
           epsilon, 
           available_volumes, 
           random_seed - гиперпараметры для алгоритма
                         spare capacity allocation 
-                        (для удобного output)
     Output:
           Возвращает с типом расширения
-          - input формата SpareCapacityGreedyInput для алгоритма spare capacity allocation,
-          - словарь остаточных сетей по EdgeKey ребра, для которого остаточная сеть считается,
-          - суммарный volume запросов для потенциальной перепрокладки для ВСЕХ сценариев падений ребер 
+          input формата SpareCapacityGreedyInput для алгоритма spare capacity allocation
     """
-    remaining_networks, volume_to_reroute = get_remaining_networks_and_volume_to_reroute(graph, route_result, demands)
     input_for_allocate_spare_capacity_algorithm = convert_to_greedy_input(graph, demands, route_result, epsilon, available_volumes, random_seed)
-    return allocation_type, input_for_allocate_spare_capacity_algorithm, remaining_networks, volume_to_reroute
+    return allocation_type, input_for_allocate_spare_capacity_algorithm
 
 
 # функция для решения max concurrent flow на остаточной сети (gamma) для параллельного расчета в рамках основного эксперимента
