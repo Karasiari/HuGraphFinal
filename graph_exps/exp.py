@@ -24,12 +24,14 @@ NetworksForExp = Tuple[nx.MultiDiGraph, Dict[EdgeKey, RemainingNetwork]]
 
 def compute_alpha_for_all_edges(
     graph: HuGraphForExps, 
+    description_flag: bool = True,
     n_jobs=-1
 ) -> List[EdgeWithParameter]:
     """
     Рассчитывает с параллелизацией процесса метрику α для ВСЕХ ребер графа - для дальнейшего предпочтительного по метрике распределения новых ресурсов в эксперименте
     Input: 
-          graph - граф-объект класса HuGraphsExps, 
+          graph - граф-объект класса HuGraphsExps
+          description_flag - выводить ли прогресс при параллелизации
           n_jobs
     Output: 
           Список ребер в виде EdgeWithParameter
@@ -43,10 +45,16 @@ def compute_alpha_for_all_edges(
     # Обработка всех рёбер
     source_target_sequence = [(min(u, v), max(u, v)) for u, v in graph.graph.edges()]
 
-    results_all = Parallel(n_jobs=n_jobs)(
-      delayed(compute_alpha_for_edge)(graph_state, u, v)
-      for u, v in tqdm(source_target_sequence, desc="Processing all edges", total=len(source_target_sequence))
-    )
+    if description_flag:
+      results_all = Parallel(n_jobs=n_jobs)(
+        delayed(compute_alpha_for_edge)(graph_state, u, v)
+        for u, v in tqdm(source_target_sequence, desc="Processing all edges", total=len(source_target_sequence))
+      )
+    else:
+      results_all = Parallel(n_jobs=n_jobs)(
+        delayed(compute_alpha_for_edge)(graph_state, u, v)
+        for u, v in source_target_sequence
+      )
     edges_with_alphas = [r for r in results_all if r is not None]
     return edges_with_alphas
 
@@ -101,7 +109,7 @@ def get_support_edge(
     remaining_network_traffic_graph = remaining_network[1].copy()
     remaining_graph = HuGraphForExps(remaining_network_topology_graph, remaining_network_traffic_graph)
   
-    edges_with_alphas = compute_alpha_for_all_edges(remaining_graph)
+    edges_with_alphas = compute_alpha_for_all_edges(remaining_graph, description_flag=False)
     edges_with_alphas.sort(key=lambda x: x[1], reverse=True)
     support_edge = edges_with_alphas[0][0]
     return support_edge
