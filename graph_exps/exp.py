@@ -265,7 +265,6 @@ def allocation_test(
     """
     # преобразуем решение исходного MCF под алгоритм spare capacity allocation
     tasks_for_converting = []
-    input_for_allocate_spare_capacity_algorithm = convert_to_greedy_input(graph, demands, route_result, epsilon, available_volumes, random_seed)
     for allocation_type, network in networks.items():
       graph = network[0]
       tasks_for_converting.append((graph, allocation_type, demands, route_result, epsilon, available_volumes, random_seed))
