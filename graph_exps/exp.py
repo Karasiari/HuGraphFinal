@@ -10,12 +10,14 @@ from joblib import Parallel, delayed
 from .instruments_for_exps import *
 
 # алиасы для читаемости
-EdgeWithParameter = Tuple[Tuple[int, int], float | None]
+EdgeKey = Tuple[int, int]
+EdgeWithParameter = Tuple[EdgeKey, float | None]
 RouteResult = Dict[int, List[Tuple[int, int, int]]]
 DemandsDict = Dict[int, Tuple[int, int, int]]
-EdgeKey = Tuple[int, int]
+RemainingNetwork = Tuple[nx.DiGraph, nx.MultiDiGraph]
 AddVolumeByEdge = Dict[EdgeKey, int]
 AllocationResult = Tuple[str, Tuple[bool, float, AddVolumeByEdge]]
+NetworksForExp = Tuple[nx.MultiDiGraph, Dict[EdgeKey, RemainingNetwork]]
                                                                                                 
 
 # функция для расчета метрики α для ВСЕХ ребер графа
@@ -39,7 +41,7 @@ def compute_alpha_for_all_edges(
         raise ValueError("Graph is not pickle-serializable. Ensure GraphMCFexps supports pickle.") from e
 
     # Обработка всех рёбер
-    source_target_sequence = [(u, v) for u, v in graph.graph.edges()]
+    source_target_sequence = [(min(u, v), max(u, v)) for u, v in graph.graph.edges()]
 
     results_all = Parallel(n_jobs=n_jobs)(
       delayed(compute_alpha_for_edge)(graph_state, u, v)
@@ -48,25 +50,64 @@ def compute_alpha_for_all_edges(
     edges_with_alphas = [r for r in results_all if r is not None]
     return edges_with_alphas
 
+
+# функция для обработки решения исходного MCF в рамках эксперимента
+
+def convert_mcf_results_for_exp(
+    graph: nx.MultiDiGraph, 
+    route_result: RouteResult,
+    demands: DemandsDict
+) -> Tuple[Dict[EdgeKey, RemainingNetwork], int]:
+    """
+    Обрабатывает решение исходной задачи MCF на нерасширенном графе
+    под основной эксперимент расширения
+    По результатам решения исходной задачи MCF
+    - для каждого ребра рассматривает сценарий его падения и формирует остаточную сеть для этого сценария
+    - вычисляет total volume запросов для потенциальной перепрокладки
+    Input:
+          graph - нерасширенная версия графа, 
+                  на котором проводится эксперимент
+          route_result - результат решения исходного MCF 
+                         как словарь проложенных по ребрам путей 
+                         по индексу запроса
+          demands - информация по проложенным в ходе решения исходного MCF запросам
+                    как словарь по индексу запроса
+    Output:
+          Возвращает
+          - словарь нерасширенных остаточных сетей по EdgeKey ребра, для которого остаточная сеть считается
+          - суммарный volume запросов для потенциальной перепрокладки для ВСЕХ сценариев падений ребер 
+    """
+    remaining_networks, volume_to_reroute = get_remaining_networks_and_volume_to_reroute(graph, route_result, demands)
+    return remaining_networks, volume_to_reroute
+
+
 # функция для расширения сети
 
 def expand_network_for_type(
-    graph: HuGraphForExps, 
+    graph: nx.MultiDiGraph, 
+    unexpanded_remaining_networks: Dict[EdgeKey, RemainingNetwork],
     edges_with_alphas: List[EdgeWithParameter], 
     resources_to_add: List[int], 
     allocation_type: str
-) -> HuGraphForExps:
+) -> Tuple[nx.MultiDiGraph, 
+           Dict[EdgeKey, RemainingNetwork]]:
     """
-    Создает расширенный новыми ресурсами граф по типу распределения ресурсов
+    Создает расширенный новыми ресурсами граф по типу распределения ресурсов,
+    получает расширенные остаточные сети для каждого типа распределения ресурсов
     Input: 
-           graph - граф для расширения,
-           edges_with_alphas - список всех ребер с расчитанной метрикой α,
+           graph - граф для расширения
+           unexpanded_remaining_networks - нерасширенные остаточные сети 
+                                           как словарь сетей по EdgeKey
+           edges_with_alphas - список всех ребер с расчитанной метрикой α
            resources_to_add - список новых ресурсов как список capacity
            allocation_type - тип распределения ресурсов
     Output:
-           расширенный граф
+           expanded_graph - расширенный граф
+           expanded_remaining_networks - расширенные остаточные сети в форме исходного словаря
     """
-  
+    expanded_graph: nx.MultiDiGraph = nx.MultiDiGraph()
+    expanded_remaining_networks: Dict[EdgeKey, RemainingNetwork] = {}
+
     def filter_edges(edges, min_ratio, max_ratio):
       if min_ratio < 0 or max_ratio > 1:
         raise ValueError("Некорректные значения min и max")
@@ -116,9 +157,16 @@ def expand_network_for_type(
     else:
         raise ValueError(f"Тип распределения ресурсов {allocation_type} не предусмотрен экспериментом")
 
-    graph_copy_to_expand = graph.copy()
-    expanded_graph = expand_graph(graph_copy_to_expand, source_target_sequence_for_new_resources)
-    return expanded_graph
+    expanded_graph = expand_graph(graph, source_target_sequence_for_new_resources)
+    for failed_edge, unexpanded_remaining_network in unexpanded_remaining_networks.items():
+      resources_for_remaining_network = []
+      for additional_edge, capacity in source_target_sequence_for_new_resources:
+        if additional_edge != failed_edge:
+          resources_for_remaining_network.append((additional_edge, capacity))
+      unexpanded_remaining_topology_graph, remaining_traffic_graph = unexpanded_remaining_network
+      remaining_topology_graph = expand_graph(unexpanded_remaining_topology_graph, resources_for_remaining_network)
+      expanded_remaining_networks[failed_edge] = (remaining_topology_graph, remaining_traffic_graph)
+    return expanded_graph, expanded_remaining_networks
 
 
 # функция для выборки ребер, для которых мы будем рассматривать остаточные сети в ходе эксперимента
@@ -169,9 +217,10 @@ def get_edges_for_remaining_networks(
 # функция для теста на перепрокладку при падении ребер
 
 def allocation_test(
-    graphs: Dict[str, nx.MultiDiGraph], 
+    networks: Dict[str, NetworksForExp], 
     route_result: RouteResult,
     demands: DemandsDict,
+    volume_to_reroute: int,
     edges_for_remaining_networks: Set[EdgeKey],
     tries_for_allocation: int,
     epsilon: float = 1.0,
@@ -182,18 +231,24 @@ def allocation_test(
            Dict[str, List[EdgeWithParameter]],
            Dict[str, int]]:
     """
-    Функция для проведения перепрокладки на уже расширенном графе:
-    1) По результатам решения исходной задачи MCF для каждого ребра рассматривает сценарий его падения и формирует остаточную сеть для этого сценария
-    2) Для каждой остаточной сети решает max concurrent flow problem - нужный нам результат gamma остаточной сети
-    3) Использует результаты решения задачи MCF для задачи перепрокладки - задача решается нашим алгоритмом spare capacity allocation
-    4) Возвращает общие результаты
+    Функция для проведения перепрокладки на уже расширенных графах:
+    1) Для каждой расширенной остаточной сети решает max concurrent flow problem - нужный нам результат gamma остаточной сети
+    2) Использует результаты решения задачи MCF для задачи перепрокладки - задача решается нашим алгоритмом spare capacity allocation
+    3) Возвращает общие результаты
     Input:
-          graphs - словарь расширенных графов по типу распределения ресурсов
+          networks     - словарь расширенных сетей по типу распределения ресурсов,
+                         каждая расширенная сеть это:
+                         -- расширенный исходный граф, на котором проводится эксперимент
+                         -- словарь расширенных остаточных сетей по EdgeKey
           route_result - результат решения исходного MCF 
                          как словарь проложенных по ребрам путей 
                          по индексу запроса
-          demands - информация по проложенным в ходе решения исходного MCF запросам
-                    как словарь по индексу запроса
+          demands      - информация по проложенным в ходе решения исходного MCF запросам
+                         как словарь по индексу запроса
+          volume_to_reroute - суммарное значение volume запросов для перепрокладки 
+                              для всех сценариев падений ребер
+                              по типу распределения ресурсов,
+                              знаменатель для нормировки rerouted volume ratio
           edges_for_remaining_networks - множество ребер, для которых мы будем рассматривать 
                                          остаточные сети в эксперименте
           tries_for_allocation - количество запусков жадного алгоритма spare capacity allocation
@@ -206,35 +261,33 @@ def allocation_test(
           algorithm_results - результаты решений задачи перепрокладки
           remaining_networks_gammas_by_type - словарь по типу распределения ресурсов 
                                               списков gamma остаточной сети по упавшему ребру
-          volume_to_reroute_by_type - суммарное значение volume запросов для перепрокладки 
-                                      для всех сценариев падений ребер
-                                      по типу распределения ресурсов,
-                                      знаменатель для нормировки rerouted volume ratio
+          volume_to_reroute - передаем в эту функцию для удобства
     """
-    # преобразуем решение исходного MCF и находим остаточные сети
+    # преобразуем решение исходного MCF под алгоритм spare capacity allocation
     tasks_for_converting = []
-    for allocation_type, graph in graphs.items():
-      tasks_for_converting.append((graph, route_result, demands, allocation_type, epsilon, available_volumes, random_seed))
+    input_for_allocate_spare_capacity_algorithm = convert_to_greedy_input(graph, demands, route_result, epsilon, available_volumes, random_seed)
+    for allocation_type, network in networks.items():
+      graph = network[0]
+      tasks_for_converting.append((graph, allocation_type, demands, route_result, epsilon, available_volumes, random_seed))
     converted_results = Parallel(n_jobs=n_jobs)(
-       delayed(convert_mcf_results_for_exp)(graph, route_result, demands, allocation_type, epsilon, available_volumes, random_seed)
-       for graph, route_result, demands, allocation_type, epsilon, available_values, random_seed in tqdm(tasks_for_converting, desc="Converting initial MCF results", total=len(tasks_for_converting))
+       delayed(convert_mcf_results_to_greedy_input)(graph, allocation_type, demands, route_result, epsilon, available_volumes, random_seed)
+       for graph, allocation_type, demands, route_result, epsilon, available_volumes, random_seed in tqdm(tasks_for_converting, desc="Converting initial MCF results", total=len(tasks_for_converting))
     )
 
     # параллельно считаем gamma для остаточных сетей
     remaining_networks_gammas_by_type = {}
-    volume_to_reroute_by_type = {}
-    for allocation_type, _, remaining_networks, volume_to_reroute in converted_results:
+    for allocation_type, network in networks.items():
+      remaining_networks = network[1]
       remaining_networks_by_failed_edge = [(edge, remaining_network) for edge, remaining_network in remaining_networks.items() if edge in edges_for_remaining_networks]
       remaining_networks_gammas = Parallel(n_jobs=n_jobs)(
           delayed(solve_mcfp_for_exp)(edge, network)
           for edge, network in tqdm(remaining_networks_by_failed_edge, desc=f"Solving remaining network MCFPs for {allocation_type}", total=len(remaining_networks_by_failed_edge))
       )
       remaining_networks_gammas_by_type[allocation_type] = remaining_networks_gammas
-      volume_to_reroute_by_type[allocation_type] = volume_to_reroute
 
     # параллельно запускаем алгоритм spare capacity allocation
     tasks_for_allocation = []
-    for allocation_type, input_for_algorithm, _, _ in converted_results:
+    for allocation_type, input_for_algorithm in converted_results:
       initial_random_seed = input_for_algorithm.random_seed
       for try_number in range(tries_for_allocation):
         random_seed_for_try = initial_random_seed + try_number if initial_random_seed is not None else None
@@ -247,7 +300,7 @@ def allocation_test(
         delayed(allocate_spare_capacity)(input_for_algorithm, allocation_type)
         for input_for_algorithm, allocation_type in tqdm(tasks_for_allocation, desc="Processing allocation", total=len(tasks_for_allocation))
     )
-    return algorithm_results, remaining_networks_gammas_by_type, volume_to_reroute_by_type
+    return algorithm_results, remaining_networks_gammas_by_type, volume_to_reroute
 
 
 # функция для получения итоговых результатов эксперимента по графу в нужном формате
@@ -255,7 +308,7 @@ def allocation_test(
 def get_right_output(
     allocation_results_raw: Tuple[List[AllocationResult], 
                             Dict[str, List[EdgeWithParameter]],
-                            Dict[str, int]]
+                            int]
 ) -> pd.DataFrame:
     """
     По результатам эксперимента формируем табличку pandas DataFrame
@@ -265,17 +318,16 @@ def get_right_output(
           -- algorithm_results - результаты решений задачи перепрокладки
           -- remaining_networks_gammas_by_type - словарь по типу распределения ресурсов 
                                                  списков gamma остаточной сети по упавшему ребру
-          -- volume_to_reroute_by_type - суммарное значение volume запросов для перепрокладки 
-                                         для всех сценариев падений ребер
-                                         по типу распределения ресурсов,
-                                         знаменатель для нормировки rerouted volume ratio
+          -- volume_to_reroute - суммарное значение volume запросов для перепрокладки 
+                                 для всех сценариев падений ребер,
+                                 знаменатель для нормировки rerouted volume ratio
     Output:
           результаты в виде pandas DataFrame
     """
     result_dict = {}
     gammas_dict = {}
     allocation_seen = {}
-    algorithm_results, remaining_networks_gammas_by_type, volume_to_reroute_by_type = allocation_results_raw
+    algorithm_results, remaining_networks_gammas_by_type, volume_to_reroute = allocation_results_raw
   
     for allocation_type, remaining_networks_gammas in remaining_networks_gammas_by_type.items():
       gammas_dict[allocation_type] = {}
@@ -283,7 +335,7 @@ def get_right_output(
         gammas_dict[allocation_type][f'gamma for failed {edge}'] = round(remaining_network_gamma, 2) if remaining_network_gamma is not None else None
   
     for allocation_type, result_raw in algorithm_results:
-      result = {'allocation solved': result_raw[0], 'rerouted volume ratio': round(result_raw[1] / volume_to_reroute_by_type[allocation_type], 2)}
+      result = {'allocation solved': result_raw[0], 'rerouted volume ratio': round(result_raw[1] / volume_to_reroute, 2)}
       result |= gammas_dict[allocation_type]
       if allocation_seen.get(allocation_type, False):
           allocation_seen[allocation_type] += 1
@@ -331,18 +383,23 @@ def expand_test_for_graph(
 
     # решаем задачу MCF на исходном графе - получаем начальную маршрутизацию трафика
     route_result, demands, _, multidigraph = graph.solve_mcf()
+
+    # обрабатываем решение исходной задачи MCF для нашего эксперимента
+    unexpanded_remaining_networks, total_volume_to_reroute = convert_mcf_results_for_exp(multidigraph, route_result, demands)
     
     # распределяем новые ресурсы согласно типу аллокации и получаем расширенные сети
     additional_resources.sort(reverse=True)
+    expanded_networks = {}
     expanded_graphs = {}
     for allocation_type in allocation_types:
-        expanded_graphs[allocation_type] = expand_network_for_type(multidigraph, edges_with_alphas, additional_resources, allocation_type)
+        expanded_networks[allocation_type] = expand_network_for_type(multidigraph, unexpanded_remaining_networks, edges_with_alphas, additional_resources, allocation_type)
+        expanded_graphs[allocation_type] = expanded_networks[allocation_type][0]
 
     # определяем, для каких ребер рассматриваем остаточные сети
     edges_for_remaining_networks = get_edges_for_remaining_networks(expanded_graphs, remaining_networks_pref, route_result, demands)
 
     # проводим эксперимент на расширенных графах
-    allocation_results_raw = allocation_test(expanded_graphs, route_result, demands, edges_for_remaining_networks, tries_for_allocation, epsilon, available_volumes, random_seed)
+    allocation_results_raw = allocation_test(expanded_networks, route_result, demands, total_volume_to_reroute, edges_for_remaining_networks, tries_for_allocation, epsilon, available_volumes, random_seed)
 
     # получаем нужный формат output
     allocation_results = get_right_output(allocation_results_raw)
