@@ -26,8 +26,7 @@ def allocation_reduced_test(
     available_volumes: Tuple[Tuple[int, float], ...] = ((1, 1.0),),
     random_seed: int | None = None,
     n_jobs=-1
-) -> Tuple[List[AllocationResult],
-           int]:
+) -> Tuple[List[AllocationResult], int]:
     tasks_for_converting = []
     for allocation_type, network in networks.items():
       graph = network[0]
@@ -55,8 +54,7 @@ def allocation_reduced_test(
 
 
 def get_reduced_right_output(
-    allocation_results_raw: Tuple[List[AllocationResult], 
-                            int]
+    allocation_results_raw: Tuple[List[AllocationResult], int]
 ) -> pd.DataFrame:
     result_dict = {}
     allocation_seen = {}
