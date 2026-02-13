@@ -185,7 +185,7 @@ def expand_remaining_network_graph(
           source_target_sequence_to_add - список новых ребер 
                                           как список EdgeWithParameter
     Output:
-          Расширенный граф
+          Расширенный граф остаточной сети
     """
     expanded_graph = graph.copy()
     for edge, capacity in source_target_sequence_to_add:
