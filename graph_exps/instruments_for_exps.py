@@ -172,6 +172,29 @@ def expand_graph(
     return expanded_graph
 
 
+# функция для расширения графа остаточной сети
+
+def expand_remaining_network_graph(
+    graph: nx.DiGraph, 
+    source_target_sequence_to_add: List[EdgeWithParameter]
+) -> nx.MultiDiGraph:
+    """
+    Расширяет граф по списку новых ребер
+    Input:
+          graph - граф остаточной сети для расширения
+          source_target_sequence_to_add - список новых ребер 
+                                          как список EdgeWithParameter
+    Output:
+          Расширенный граф
+    """
+    expanded_graph = graph.copy()
+    for edge, capacity in source_target_sequence_to_add:
+        source, target = edge
+        expanded_graph[source][target]['capacity'] += capacity
+        expanded_graph[target][source]['capacity'] += capacity
+    return expanded_graph
+
+
 # опциональная функция под выборку ребер в exp.py, для которых рассматриваем остаточные сети
 
 def get_slack_graph(
