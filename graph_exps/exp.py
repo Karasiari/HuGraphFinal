@@ -279,8 +279,8 @@ def allocation_test(
       remaining_networks = network[1]
       remaining_networks_by_failed_edge = [(edge, remaining_network) for edge, remaining_network in remaining_networks.items() if edge in edges_for_remaining_networks]
       remaining_networks_gammas = Parallel(n_jobs=n_jobs)(
-          delayed(solve_mcfp_for_exp)(edge, network)
-          for edge, network in tqdm(remaining_networks_by_failed_edge, desc=f"Solving remaining network MCFPs for {allocation_type}", total=len(remaining_networks_by_failed_edge))
+          delayed(solve_mcfp_for_exp)(edge, remaining_network)
+          for edge, remaining_network in tqdm(remaining_networks_by_failed_edge, desc=f"Solving remaining network MCFPs for {allocation_type}", total=len(remaining_networks_by_failed_edge))
       )
       remaining_networks_gammas_by_type[allocation_type] = remaining_networks_gammas
 
