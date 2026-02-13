@@ -81,6 +81,28 @@ def convert_mcf_results_for_exp(
     return remaining_networks, volume_to_reroute
 
 
+# функция для поиска саппорт ребер - для определенных типов расширения сети
+
+def get_support_edge(
+    remaining_network: RemainingNetwork
+) -> EdgeKey:
+    """
+    Ищем саппорт ребро с помощью остаточной нерасширенной сети основного ребра
+    Input:
+          remaining_network - остаточная сеть основного ребра
+    Output:
+          Саппорт ребро основного ребра как EdgeKey
+    """
+    remaining_network_topology_graph = remaining_network[0].copy()
+    remaining_network_traffic_graph = remaining_network[1].copy()
+    remaining_graph = HuGraphForExps(remaining_network_topology_graph, remaining_network_traffic_graph)
+  
+    edges_with_alphas = compute_alpha_for_all_edges(remaining_graph)
+    edges_with_alphas.sort(key=lambda x: x[1], reverse=True)
+    support_edge = edges_with_alphas[0][0]
+    return support_edge
+  
+
 # функция для расширения сети
 
 def expand_network_for_type(
