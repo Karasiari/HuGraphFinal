@@ -165,7 +165,7 @@ def expand_network_for_type(
           resources_for_remaining_network.append((additional_edge, capacity))
       unexpanded_remaining_topology_graph, remaining_traffic_graph = unexpanded_remaining_network
       remaining_topology_graph = expand_graph(unexpanded_remaining_topology_graph, resources_for_remaining_network)
-      expanded_remaining_networks[failed_edge] = (remaining_topology_graph, remaining_traffic_graph)
+      expanded_remaining_networks[failed_edge] = (remaining_topology_graph.copy(), remaining_traffic_graph.copy())
     return expanded_graph, expanded_remaining_networks
 
 
