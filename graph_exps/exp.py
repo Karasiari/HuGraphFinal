@@ -93,7 +93,7 @@ def convert_mcf_results_for_exp(
 
 def get_support_edge(
     remaining_network: RemainingNetwork
-) -> EdgeKey:
+) -> EdgeKey | None:
     """
     Ищем саппорт ребро с помощью остаточной нерасширенной сети основного ребра
     Input:
@@ -107,6 +107,8 @@ def get_support_edge(
     for u, v, data in remaining_network_topology_digraph.edges(data=True):
       remaining_network_topology_graph.add_edge(u, v, capacity=data['weight'])
     remaining_network_traffic_graph = remaining_network[1].copy()
+    if not (remaining_network_traffic_graph.size() > 0):
+      return None
     remaining_graph = HuGraphForExps(remaining_network_topology_graph, remaining_network_traffic_graph)
   
     edges_with_alphas = compute_alpha_for_all_edges(remaining_graph, description_flag=False)
@@ -193,7 +195,9 @@ def expand_network_for_type(
     elif allocation_type == "alpha_with_support":
         support_edges_dict = {}
         for edge, unexpanded_remaining_network in unexpanded_remaining_networks.items():
-          support_edges_dict[edge] = get_support_edge(unexpanded_remaining_network)
+          support_edge = get_support_edge(unexpanded_remaining_network)
+          support_edge = support_edge if not (support_edge is None) else edges_with_alphas[0][0]
+          support_edges_dict[edge] = support_edge
         source_target_sequence_for_new_resources = []
         current_edge_to_expand = edges_with_alphas[0][0]
         for resource in resources_to_add:
