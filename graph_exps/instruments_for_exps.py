@@ -192,12 +192,8 @@ def expand_remaining_network_graph(
         source, target = edge
         if expanded_graph.has_edge(source, target):
             expanded_graph[source][target]['weight'] += capacity
-        else:
-            expanded_graph.add_edge(source, target, weight=capacity)
         if expanded_graph.has_edge(target, source):
             expanded_graph[target][source]['weight'] += capacity
-        else:
-            expanded_graph.add_edge(target, source, weight=capacity)
     return expanded_graph
 
 
