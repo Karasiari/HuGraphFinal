@@ -190,8 +190,14 @@ def expand_remaining_network_graph(
     expanded_graph = graph.copy()
     for edge, capacity in source_target_sequence_to_add:
         source, target = edge
-        expanded_graph[source][target]['weight'] += capacity
-        expanded_graph[target][source]['weight'] += capacity
+         if expanded_graph.has_edge(source, target):
+            expanded_graph[source][target]['weight'] += capacity
+        else:
+            expanded_graph.add_edge(source, target, weight=capacity)
+        if expanded_graph.has_edge(target, source):
+            expanded_graph[target][source]['weight'] += capacity
+        else:
+            expanded_graph.add_edge(target, source, weight=capacity)
     return expanded_graph
 
 
