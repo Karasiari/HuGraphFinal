@@ -109,7 +109,7 @@ def get_support_edge(
     remaining_network_traffic_graph = remaining_network[1].copy()
     remaining_graph = HuGraphForExps(remaining_network_topology_graph, remaining_network_traffic_graph)
   
-    edges_with_alphas = compute_alpha_for_all_edges(remaining_graph)#, description_flag=False)
+    edges_with_alphas = compute_alpha_for_all_edges(remaining_graph, description_flag=False)
     edges_with_alphas.sort(key=lambda x: x[1], reverse=True)
     support_edge = edges_with_alphas[0][0]
     return support_edge
