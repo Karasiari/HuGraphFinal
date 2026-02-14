@@ -140,7 +140,7 @@ def get_remaining_networks_and_volume_to_reroute(
                 edge_oriented = (u, v)
                 edges[edge_oriented] += capacity
         for edge_oriented, capacity in edges.items():
-            if edge_oriented not in (edge_unoriented, edge_reversed):
+            if (edge_oriented not in (edge_unoriented, edge_reversed)) and (capacity != 0):
                 edges_list.append((edge_oriented[0], edge_oriented[1], {"weight": capacity}))
         slack_graph.add_edges_from(edges_list)
         slack_demands_graph.add_edges_from(affected_demands)
