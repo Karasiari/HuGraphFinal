@@ -116,7 +116,11 @@ class HuGraphForExps:
           if edge_data:
               capacity_to_decrease = edge_data["capacity"]
               self.multigraph.remove_edge(source, target, key=key)
-              current_capacity = self.graph.get_edge_data(source, target)["weight"]
+              try:
+                  current_capacity = self.graph.get_edge_data(source, target)["weight"]
+              except TypeError:
+                  matr = nx.to_numpy_array(self.graph)
+                  raise ValueError(f'{source} - {target} - {edge_data} - {matr}')
               new_capacity = current_capacity - capacity_to_decrease
               if new_capacity > 0:
                   self.graph[source][target]["weight"] = float(new_capacity)
