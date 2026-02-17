@@ -123,6 +123,7 @@ def expand_network_for_type(
     graph: nx.MultiDiGraph, 
     unexpanded_remaining_networks: Dict[EdgeKey, RemainingNetwork],
     edges_with_alphas: List[EdgeWithParameter], 
+    support_edges_dict: Dict[EdgeKey, EdgeKey],
     resources_to_add: List[int], 
     allocation_type: str
 ) -> Tuple[nx.MultiDiGraph, 
@@ -134,6 +135,10 @@ def expand_network_for_type(
            graph - граф для расширения
            unexpanded_remaining_networks - нерасширенные остаточные сети 
                                            как словарь сетей по EdgeKey
+           support_edges_dict - словарь с саппорт ребром для ребра графа,
+                                саппорт - самое уязвимое по α в 
+                                нерасширенной остаточной сети ребра;
+                                для некоторых типов распределения ресурсов
            edges_with_alphas - список всех ребер с расчитанной метрикой α
            resources_to_add - список новых ресурсов как список capacity
            allocation_type - тип распределения ресурсов
@@ -193,16 +198,22 @@ def expand_network_for_type(
         source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add)) 
       
     elif allocation_type == "alpha_with_support":
-        support_edges_dict = {}
-        for edge, unexpanded_remaining_network in unexpanded_remaining_networks.items():
-          support_edge = get_support_edge(unexpanded_remaining_network)
-          support_edge = support_edge if not (support_edge is None) else edges_with_alphas[0][0]
-          support_edges_dict[edge] = support_edge
         source_target_sequence_for_new_resources = []
         current_edge_to_expand = edges_with_alphas[0][0]
         for resource in resources_to_add:
           source_target_sequence_for_new_resources.append((current_edge_to_expand, resource))
           current_edge_to_expand = support_edges_dict[current_edge_to_expand]
+
+    elif allocation_type == "alpha_mixed":
+        source_target_sequence_for_new_resources = []
+        current_edge_to_expand = edges_with_alphas[0][0]
+        for resource in resources_to_add[:number_of_new_resources // 2]:
+          source_target_sequence_for_new_resources.append((current_edge_to_expand, resource))
+          current_edge_to_expand = support_edges_dict[current_edge_to_expand]
+        mid_edges = filter_edges(edges_with_alphas, 0.7, 0.2)
+        random.shuffle(mid_edges)
+        for i, resource in enumerate(resources_to_add[number_of_new_resources // 2:]):
+          source_target_sequence_for_new_resources.append((mid_edges[i][0], resource))
     else:
         raise ValueError(f"Тип распределения ресурсов {allocation_type} не предусмотрен экспериментом")
 
@@ -439,8 +450,14 @@ def expand_test_for_graph(
     additional_resources.sort(reverse=True)
     expanded_networks = {}
     expanded_graphs = {}
+    support_edges_dict = {}
+    if ("alpha_with_support" in allocation_types) or ("alpha_mixed" in allocation_types):
+      for edge, unexpanded_remaining_network in unexpanded_remaining_networks.items():
+        support_edge = get_support_edge(unexpanded_remaining_network)
+        support_edge = support_edge if not (support_edge is None) else edges_with_alphas[0][0]
+        support_edges_dict[edge] = support_edge
     for allocation_type in allocation_types:
-        expanded_networks[allocation_type] = expand_network_for_type(multidigraph, unexpanded_remaining_networks, edges_with_alphas, additional_resources, allocation_type)
+        expanded_networks[allocation_type] = expand_network_for_type(multidigraph, unexpanded_remaining_networks, edges_with_alphas, support_edges_dict, additional_resources, allocation_type)
         expanded_graphs[allocation_type] = expanded_networks[allocation_type][0]
 
     # определяем, для каких ребер рассматриваем остаточные сети
