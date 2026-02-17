@@ -90,8 +90,14 @@ def reduced_expand_test_for_graph(
     additional_resources.sort(reverse=True)
     expanded_networks = {}
     expanded_graphs = {}
+    support_edges_dict = {}
+    if ("alpha_with_support" in allocation_types) or ("alpha_mixed" in allocation_types):
+      for edge, unexpanded_remaining_network in unexpanded_remaining_networks.items():
+        support_edge = get_support_edge(unexpanded_remaining_network)
+        support_edge = support_edge if not (support_edge is None) else edges_with_alphas[0][0]
+        support_edges_dict[edge] = support_edge
     for allocation_type in allocation_types:
-        expanded_networks[allocation_type] = expand_network_for_type(multidigraph, unexpanded_remaining_networks, edges_with_alphas, additional_resources, allocation_type)
+        expanded_networks[allocation_type] = expand_network_for_type(multidigraph, unexpanded_remaining_networks, edges_with_alphas, support_edges_dict, additional_resources, allocation_type)
         expanded_graphs[allocation_type] = expanded_networks[allocation_type][0]
 
     allocation_results_raw = allocation_reduced_test(expanded_networks, route_result, demands, total_volume_to_reroute, tries_for_allocation, epsilon, available_volumes, random_seed)
