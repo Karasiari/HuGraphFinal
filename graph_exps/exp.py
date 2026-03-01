@@ -198,6 +198,7 @@ def expand_network_for_type(
         source_target_sequence_for_new_resources = list(zip(edges_to_expand, resources_to_add)) 
       
     elif allocation_type == "alpha_with_support":
+        edges_with_alphas.sort(key=lambda x: x[1], reverse=True)
         source_target_sequence_for_new_resources = []
         current_edge_to_expand = edges_with_alphas[0][0]
         for resource in resources_to_add:
@@ -205,6 +206,7 @@ def expand_network_for_type(
           current_edge_to_expand = support_edges_dict[current_edge_to_expand]
 
     elif allocation_type == "alpha_mixed":
+        edges_with_alphas.sort(key=lambda x: x[1], reverse=True)
         source_target_sequence_for_new_resources = []
         current_edge_to_expand = edges_with_alphas[0][0]
         for resource in resources_to_add[:number_of_new_resources // 2]:
@@ -439,6 +441,7 @@ def expand_test_for_graph(
     """
     # рассчитываем метрику α для ребер графа
     edges_with_alphas = compute_alpha_for_all_edges(graph)
+    edges_with_alphas.sort(key=lambda x: x[1], reverse=True)
 
     # решаем задачу MCF на исходном графе - получаем начальную маршрутизацию трафика
     route_result, demands, _, multidigraph = graph.solve_mcf()
