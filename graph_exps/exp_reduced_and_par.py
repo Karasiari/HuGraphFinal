@@ -16,7 +16,6 @@ RouteResult = Dict[int, List[Tuple[int, int, int]]]
 DemandsDict = Dict[int, Tuple[int, int, int]]
 EdgeKey = Tuple[int, int]
 AddVolumeByEdge = Dict[EdgeKey, int]
-AllocationResult = Tuple[str, Tuple[bool, float, AddVolumeByEdge]]
 RemainingNetwork = Tuple[nx.DiGraph, nx.MultiDiGraph]
 NetworksForExp = Tuple[nx.MultiDiGraph, Dict[EdgeKey, RemainingNetwork]]
 
@@ -25,7 +24,7 @@ def allocate_spare_capacity_for_reduced(
     allocation_type: str,
     input_for_algorithm: SpareCapacityGreedyInput,
     volume_to_reroute: int
-) -> AllocationResult:
+):
     output_of_algorithm = run_greedy_spare_capacity_allocation(input_for_algorithm)
     allocation_result = convert_greedy_output_for_exp(output_of_algorithm)
     return graph_name, allocation_type, allocation_result, volume_to_reroute
